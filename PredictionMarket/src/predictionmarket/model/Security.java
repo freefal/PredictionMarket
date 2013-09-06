@@ -1,4 +1,4 @@
-package bitcoinoptions.global;
+package predictionmarket.model;
 
 public class Security {
 	public long id; // id used in the db for this security

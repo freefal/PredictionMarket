@@ -1,4 +1,4 @@
-package bitcoinoptions.exchange;
+package predictionmarket.model;
 import java.util.*;
 
 public class OrderBook {

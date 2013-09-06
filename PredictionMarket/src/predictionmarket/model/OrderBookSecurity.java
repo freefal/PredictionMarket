@@ -1,10 +1,7 @@
-package bitcoinoptions.exchange;
+package predictionmarket.model;
 
 import java.util.*;
-
 import org.json.*;
-
-import bitcoinoptions.global.*;
 
 public class OrderBookSecurity {
 	private String security;

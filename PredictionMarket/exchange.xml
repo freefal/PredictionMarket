@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create_run_jar" name="Create Runnable Jar for Project PredictionMarket with Jar-in-Jar Loader">
+    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
+    <!--ANT 1.7 is required                                        -->
+    <target name="create_run_jar">
+        <jar destfile="/home/freefal/git/PredictionMarket/PredictionMarket/exchange.jar">
+            <manifest>
+                <attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader"/>
+                <attribute name="Rsrc-Main-Class" value="predictionmarket.exchange.Exchange"/>
+                <attribute name="Class-Path" value="."/>
+                <attribute name="Rsrc-Class-Path" value="./ mchange-commons-java-0.2.2.jar c3p0-0.9.2-pre4.jar guava-13.0.1.jar log4j-1.2.17.jar mysql-connector-java-5.1.21-bin.jar netty-3.5.7.Final.jar protobuf-java-2.4.1.jar scprov-jdk15on-1.47.0.1.jar slf4j-api-1.7.0.jar slf4j-log4j12-1.7.0.jar socketio.jar bitcoinj-0.10.jar"/>
+            </manifest>
+            <zipfileset src="jar-in-jar-loader.zip"/>
+            <fileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/bin"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="mchange-commons-java-0.2.2.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="c3p0-0.9.2-pre4.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="guava-13.0.1.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="log4j-1.2.17.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="mysql-connector-java-5.1.21-bin.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="netty-3.5.7.Final.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="protobuf-java-2.4.1.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="scprov-jdk15on-1.47.0.1.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="slf4j-api-1.7.0.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="slf4j-log4j12-1.7.0.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="socketio.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="bitcoinj-0.10.jar"/>
+        </jar>
+    </target>
+</project>

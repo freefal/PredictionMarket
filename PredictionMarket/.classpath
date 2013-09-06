@@ -13,6 +13,6 @@
 	<classpathentry kind="lib" path="lib/slf4j-api-1.7.0.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-log4j12-1.7.0.jar"/>
 	<classpathentry kind="lib" path="lib/socketio.jar"/>
-	<classpathentry kind="lib" path="lib/bitcoinj-0.10.jar"/>
+	<classpathentry kind="lib" path="lib/bitcoinj-0.10.jar" sourcepath="/home/freefal/build/bitcoinj/core"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

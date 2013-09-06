@@ -1,4 +1,4 @@
-package bitcoinoptions.global;
+package predictionmarket.model;
 
 import java.util.Random;
 

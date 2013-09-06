@@ -6,6 +6,7 @@ import java.math.*;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.discovery.*;
+import com.google.bitcoin.params.*;
 import com.google.bitcoin.store.*;
 import predictionmarket.exchange.*;
 
@@ -17,7 +18,7 @@ public class BitcoinNetworkClient extends Thread {
 	private Exchange boe;
     public static final long FEE = 50000L;
 	
-    public BitcoinNetworkClient (BitcoinOptionsExchange boe) {
+    public BitcoinNetworkClient (Exchange boe) {
     	this.boe = boe;
     	try {
     		setup();
@@ -26,14 +27,14 @@ public class BitcoinNetworkClient extends Thread {
     
     public String createReceivingAddress () {
     	ECKey key = new ECKey();
-    	wallet.keychain.add(key);
+    	wallet.addKey(key);
     	Address addr = key.toAddress(params);
     	return addr.toString();
     }
     
     public void setup() throws Exception {
 		
-		params = NetworkParameters.prodNet();
+		params = MainNetParams.get();
 		
 		// Try to read the wallet from storage, create a new one if not possible.
 		final File walletFile = new File("wallet/options.wallet");
@@ -41,9 +42,9 @@ public class BitcoinNetworkClient extends Thread {
 		boolean freshWallet = false;
 		try {
 		    wallet = Wallet.loadFromFile(walletFile);
-		} catch (IOException e) {
+		} catch (Exception e) {
 		    wallet = new Wallet(params);
-		    wallet.keychain.add(new ECKey());
+		    wallet.addKey(new ECKey());
 		    wallet.saveToFile(walletFile);
 		    freshWallet = true;
 		}
@@ -58,7 +59,7 @@ public class BitcoinNetworkClient extends Thread {
 	            wallet.clearTransactions(0);
 		}
 		// BlockStore blockStore = new DiskBlockStore(params, blockChainFile);
-		BlockStore blockStore = new BoundedOverheadBlockStore(params, blockChainFile);
+		BlockStore blockStore = new SPVBlockStore(params, blockChainFile);
 		// BlockStore blockStore = new MemoryBlockStore(params);
 		
 		
@@ -80,7 +81,7 @@ public class BitcoinNetworkClient extends Thread {
 	                try {
 	                	for (TransactionOutput txOut : tx.getOutputs()) {
 	                		if (txOut.isMine(wallet)) {
-			                	Address toAddress = txOut.getScriptPubKey().getToAddress();
+			                	Address toAddress = txOut.getScriptPubKey().getToAddress(params);
 			                	long amount = txOut.getValue().longValue();
 			                	boe.receivedCoins(toAddress.toString(), amount);
 	                		}

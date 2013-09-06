@@ -1,4 +1,4 @@
-package bitcoinoptions.global;
+package predictionmarket.model;
 
 public class User {
 	public long id;

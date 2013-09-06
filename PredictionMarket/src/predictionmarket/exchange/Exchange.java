@@ -14,32 +14,32 @@ import predictionmarket.btcnetwork.*;
 public class Exchange extends Thread {
 	private static final String CONFIG_FILE = "config.json";
 	private static final long BIG_NUM = 100000000000L;
-	private static final String USER = "bitcoinexchange";
+	private static final String USER = "predictions";
 	private static final String PASS = "m.h.=wily7.exchange";
 	private ComboPooledDataSource cpds;
 	private HashMap<Long, Worker> userWorkerMap;
 	private OrderBook ob;
 	private BitcoinNetworkClient bnc;
-	private PriceInformation pi;
+	
 	private ExchangeConfiguration ec;
 	
 	public static void main (String [] args) {
 		ExchangeConfiguration ec = new ExchangeConfiguration();
 		ec.loadFromFile(CONFIG_FILE);
 		
-		BitcoinOptionsExchange boe = new BitcoinOptionsExchange(ec);
+		Exchange boe = new Exchange(ec);
 		boe.startPI();
 		boe.start();
 		
 	}
 	
-	public BitcoinOptionsExchange (ExchangeConfiguration ec) {
+	public Exchange (ExchangeConfiguration ec) {
 		this.ec = ec;
 		
 		try {
 			cpds = new ComboPooledDataSource();
 			cpds.setDriverClass( "com.mysql.jdbc.Driver" ); //loads the jdbc driver            
-			cpds.setJdbcUrl("jdbc:mysql://127.0.0.1:3306/bitcoinoptions");
+			cpds.setJdbcUrl("jdbc:mysql://127.0.0.1:3306/prediction_market");
 			cpds.setUser(USER);                                  
 			cpds.setPassword(PASS);
 			cpds.setMinPoolSize(5);                                     
@@ -54,7 +54,7 @@ public class Exchange extends Thread {
 		loadData();
 		if(ec.btcNetworkToggle)
 			bnc = new BitcoinNetworkClient(this);
-		pi = new PriceInformation(cpds);
+		
 	}
 	
 	private void loadData() {
@@ -63,12 +63,16 @@ public class Exchange extends Thread {
 		ResultSet rs = null;
 		
 		try {
+			System.out.println("hello");
 			con = cpds.getConnection();
+			System.out.println("hello");
 			s = con.createStatement();
+			System.out.println("hello");
 			rs = s.executeQuery("SELECT * FROM securities");
 			ArrayList<String> secList = new ArrayList<String>();
+			System.out.println("hello");
 			while (rs.next()) {
-				secList.add(rs.getString("sec"));
+				secList.add(rs.getString("desc"));
 			}
 			ob = new OrderBook(secList.toArray(new String[0]));
 		} catch (Exception e) {
@@ -90,7 +94,7 @@ public class Exchange extends Thread {
 	}
 
 	public void startPI() {
-		pi.start();
+		int a;
 	}
 	public void run () {
 		ServerSocket ss = null;
@@ -890,13 +894,7 @@ public class Exchange extends Thread {
 				Security sec = null;
 				String type = rs.getString("type");
 				if (type.equals("option")) {
-					Option opt = new Option();
-					opt.strike = rs.getLong("strike");
-					opt.optionType = rs.getString("optiontype");
-					opt.underlying = rs.getString("underlying");
-					opt.expiration = rs.getLong("expiration");
-					opt.contractsize = rs.getLong("contractsize");
-					sec = opt;
+					int a;
 				}
 				sec.name = rs.getString("sec");
 				sec.type = type;
@@ -940,26 +938,15 @@ public class Exchange extends Thread {
 		Security sec = position.sec;
 		long singleMargin = 0;
 		if(sec.type.equals("option")) {
-			singleMargin = initialMargin((Option)sec);
+			int a;
 		}
 		
 		long totalMargin = singleMargin * -amount;
 		return totalMargin;
 	}
 	
-	public long initialMargin (Option option) {
-		long underlyingPrice = pi.getPrice(option.underlying);
-		long strike = option.strike;
-		long margin = 0;
-		
-		if(option.optionType.equals("call")) {
-			margin = underlyingPrice + underlyingPrice/2 - strike;
-		}
-		else {
-			margin = strike - (underlyingPrice - underlyingPrice/2);
-		}
-		
-		return margin;
+	public long initialMargin (Security option) {
+		return 0;
 	}
 	
 	public synchronized long currentBalance(User user) {
