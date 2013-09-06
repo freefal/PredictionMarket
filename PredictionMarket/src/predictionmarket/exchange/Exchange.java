@@ -63,18 +63,20 @@ public class Exchange extends Thread {
 		ResultSet rs = null;
 		
 		try {
-			System.out.println("hello");
 			con = cpds.getConnection();
-			System.out.println("hello");
 			s = con.createStatement();
-			System.out.println("hello");
 			rs = s.executeQuery("SELECT * FROM securities");
-			ArrayList<String> secList = new ArrayList<String>();
-			System.out.println("hello");
+			ArrayList<Security> securities = new ArrayList<Security>();
 			while (rs.next()) {
-				secList.add(rs.getString("desc"));
+				Security sec = new Security();
+				sec.id = rs.getLong("id");
+				sec.desc = rs.getString("desc");
+				sec.contractsize = rs.getLong("contractsize");
+				sec.begin = rs.getTimestamp("begin").getTime();
+				sec.end = rs.getTimestamp("end").getTime();
+				securities.add(sec);
 			}
-			ob = new OrderBook(secList.toArray(new String[0]));
+			ob = new OrderBook(securities);
 		} catch (Exception e) {
 			System.err.println("Unable to load data to start exchange");
 			e.printStackTrace();
@@ -206,7 +208,7 @@ public class Exchange extends Thread {
 			return 0;
 		}
 		
-		void reportTransaction (String security, long price, long quantity, long transactionID) {
+		void reportTransaction (long security, long price, long quantity, long transactionID) {
 			
 			JSONObject job = null;
 			
@@ -244,11 +246,11 @@ public class Exchange extends Thread {
 		}
 		
 		int handlePlaceOrder (JSONObject in, PrintWriter pw) throws JSONException {
-			String security, buySell, orderType;
-			security = buySell = orderType = null;
-			long price = 0, quantity = 0;
+			String buySell, orderType;
+			buySell = orderType = null;
+			long price = 0, quantity = 0, security = 0;
 			try { 
-				security = in.getString("security");
+				security = in.getLong("security");
 				buySell = in.getString("buysell");
 				orderType = in.getString("ordertype");
 				quantity = in.getLong("quantity");
@@ -295,11 +297,11 @@ public class Exchange extends Thread {
 		}
 		
 		int handleCancelOrder (JSONObject in, PrintWriter pw) throws JSONException {
-			String security = null;
+			long security = 0;
 			long orderID = -1;
 			try {
 				orderID = in.getLong("id");
-				security = in.getString("security");
+				security = in.getLong("security");
 			} catch (Exception e) {
 				pw.println(errorMessage("Order must contain id and security	"));
 				return 0;
@@ -324,10 +326,10 @@ public class Exchange extends Thread {
 		}
 		
 		int handleGetBook (JSONObject in, PrintWriter pw) throws JSONException {
-			String security = null;
+			long security = 0;
 			
 			try {
-				security = in.getString("security");
+				security = in.getLong("security");
 			} catch (Exception e) {
 				pw.println(errorMessage("Order must contain security"));
 				return 0;
@@ -348,10 +350,10 @@ public class Exchange extends Thread {
 		}
 		
 		int handleGetUserOrders (JSONObject in, PrintWriter pw) throws JSONException {
-			String security = null;
+			long security = 0;
 						
 			try {
-				security = in.getString("security");
+				security = in.getLong("security");
 			} catch (Exception e) {
 				pw.println(errorMessage("Order must contain security"));
 				return 0;
@@ -601,7 +603,7 @@ public class Exchange extends Thread {
 		return job.toString();
 	}
 	
-	private synchronized void reportTransaction(String security, long price, long quantity, long buyerID, long sellerID, long transactionID) {
+	private synchronized void reportTransaction(long security, long price, long quantity, long buyerID, long sellerID, long transactionID) {
 		Worker buyerWorker = userWorkerMap.get(buyerID);
 		if (buyerWorker != null) {
 			buyerWorker.reportTransaction(security, price, quantity, transactionID);
@@ -776,7 +778,7 @@ public class Exchange extends Thread {
 		return "";
 	}
 	
-	private synchronized long executeTransaction(String security, long price, long quantity, long buyerID, long sellerID) {
+	private synchronized long executeTransaction(long security, long price, long quantity, long buyerID, long sellerID) {
 		Connection con = null;
 		PreparedStatement ps = null;
 		PreparedStatement ps2 = null;
@@ -785,7 +787,7 @@ public class Exchange extends Thread {
 		try {
 			con = cpds.getConnection();
 			ps = con.prepareStatement("INSERT INTO transactions (security, price, quantity, buyerID, sellerID) VALUES (?,?,?,?,?)");
-			ps.setString(1, security);
+			ps.setLong(1, security);
 			ps.setLong(2, price);
 			ps.setLong(3, quantity);
 			ps.setLong(4, buyerID);
@@ -804,7 +806,7 @@ public class Exchange extends Thread {
 			ps.executeUpdate();
 			ps = con.prepareStatement("SELECT positions.id FROM positions WHERE userID=? and securityID=(SELECT securities.id FROM securities WHERE sec=?)");
 			ps.setLong(1, buyerID);
-			ps.setString(2, security);
+			ps.setLong(2, security);
 			rs = ps.executeQuery();
 			long buyerPositionID = -1;
 			if (rs.next())
@@ -826,7 +828,7 @@ public class Exchange extends Thread {
 			}
 			else {
 				ps2.setLong(1, buyerID);
-				ps2.setString(2, security);
+				ps2.setLong(2, security);
 				ps2.setLong(3, quantity);
 				ps2.executeUpdate();
 			}
@@ -838,7 +840,7 @@ public class Exchange extends Thread {
 			}
 			else {
 				ps2.setLong(1, sellerID);
-				ps2.setString(2, security);
+				ps2.setLong(2, security);
 				ps2.setLong(3, -quantity);
 				ps2.executeUpdate();
 			}
@@ -896,9 +898,8 @@ public class Exchange extends Thread {
 				if (type.equals("option")) {
 					int a;
 				}
-				sec.name = rs.getString("sec");
-				sec.type = type;
 				sec.id = rs.getLong("securityid");
+				sec.desc = rs.getString("desc");
 				position.sec = sec;
 				positions.add(position);
 			}
@@ -937,9 +938,6 @@ public class Exchange extends Thread {
 			return 0;
 		Security sec = position.sec;
 		long singleMargin = 0;
-		if(sec.type.equals("option")) {
-			int a;
-		}
 		
 		long totalMargin = singleMargin * -amount;
 		return totalMargin;

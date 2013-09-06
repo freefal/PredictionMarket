@@ -9,7 +9,7 @@ public class Order {
 	public long quantity;
 	public long placed; // Time placed
 	public long userID;
-	public String security;
+	public long security;
 	public boolean bid;
 	public long ttx; // Not currently used - only IOC or GTC allowed
 	
@@ -29,7 +29,7 @@ public class Order {
 		
 	}
 	
-	public Order(long price, long quantity, long placed, long userID, String security, boolean bid) {
+	public Order(long price, long quantity, long placed, long userID, long security, boolean bid) {
 		this.id = rand.nextLong();
 		this.price = price;
 		this.quantity = quantity;

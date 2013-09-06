@@ -4,14 +4,14 @@ import java.util.*;
 import org.json.*;
 
 public class OrderBookSecurity {
-	private String security;
+	private Security s;
 	private HashMap<Long, Order> idMap;
 	private HashMap<Long, ArrayList<Order>> userMap;
 	private PriorityQueue<Order> bids; 
 	private PriorityQueue<Order> asks;
 	
-	public OrderBookSecurity (String security) {
-		this.security = security;
+	public OrderBookSecurity (Security s) {
+		this.s = s;
 		idMap = new HashMap<Long, Order>();
 		userMap = new HashMap<Long, ArrayList<Order>>();
 		this.bids = new PriorityQueue<Order>(100,new Comparator<Order>() {

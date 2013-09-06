@@ -2,27 +2,24 @@ package predictionmarket.model;
 import java.util.*;
 
 public class OrderBook {
-	private HashMap<String, OrderBookSecurity> obs;
-	String[] secList;
-	HashMap<String,Integer> secMap;
+	private HashMap<Long, OrderBookSecurity> obs;
+	ArrayList<Security> securities;
+	HashMap<Long,Integer> mapSec;
 	
-	public OrderBook (String[] secList) {
-		this.secList = secList;
-		secMap = new HashMap<String,Integer>();
-		for (String sec : secList) {
-			secMap.put(sec, 1);
-		}
-		obs = new HashMap<String, OrderBookSecurity>();
-		for (String sec : secList) {
-			obs.put(sec, new OrderBookSecurity(sec));
+	public OrderBook (ArrayList<Security> securities) {
+		this.securities = securities;
+
+		for (Security s : securities) {
+			obs.put(s.id, new OrderBookSecurity(s));
+			mapSec.put(s.id, 1);
 		}
 	}
 	
-	public boolean secExists (String security) {
-		return secMap.get(security) != null;
-	}
-	
-	public OrderBookSecurity getOB (String security) {
+	public OrderBookSecurity getOB (long security) {
 		return obs.get(security);
+	}
+	
+	public boolean secExists(long security) {
+		return mapSec.containsKey(security);
 	}
 }
