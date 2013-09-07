@@ -8,7 +8,8 @@ public class OrderBook {
 	
 	public OrderBook (ArrayList<Security> securities) {
 		this.securities = securities;
-
+		obs = new HashMap<Long, OrderBookSecurity>();
+		mapSec = new HashMap<Long, Integer>();
 		for (Security s : securities) {
 			obs.put(s.id, new OrderBookSecurity(s));
 			mapSec.put(s.id, 1);

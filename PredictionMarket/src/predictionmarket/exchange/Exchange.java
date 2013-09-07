@@ -28,7 +28,6 @@ public class Exchange extends Thread {
 		ec.loadFromFile(CONFIG_FILE);
 		
 		Exchange boe = new Exchange(ec);
-		boe.startPI();
 		boe.start();
 		
 	}
@@ -95,9 +94,6 @@ public class Exchange extends Thread {
 		}
 	}
 
-	public void startPI() {
-		int a;
-	}
 	public void run () {
 		ServerSocket ss = null;
 		try {
@@ -155,15 +151,15 @@ public class Exchange extends Thread {
 		
 		
 		int handleLogin (JSONObject in, PrintWriter pw) throws JSONException {
-			String username = in.getString("username");
-			String password = in.getString("password");
 			Connection con = null;
 			PreparedStatement ps = null;
 			ResultSet rs = null;
-			
+
 			try {
+				String username = in.getString("username");
+				String password = in.getString("password");
 				con = cpds.getConnection();
-				ps = con.prepareStatement("SELECT id FROM users WHERE username=? AND password=PASSWORD(?)");
+				ps = con.prepareStatement("SELECT id FROM users WHERE user=? AND pass=PASSWORD(?)");
 				ps.setString(1, username);
 				ps.setString(2, password);
 				rs = ps.executeQuery();
@@ -246,16 +242,14 @@ public class Exchange extends Thread {
 		}
 		
 		int handlePlaceOrder (JSONObject in, PrintWriter pw) throws JSONException {
-			String buySell, orderType;
-			buySell = orderType = null;
+			String buySell = null;
 			long price = 0, quantity = 0, security = 0;
 			try { 
 				security = in.getLong("security");
+				price = in.getLong("price");
 				buySell = in.getString("buysell");
-				orderType = in.getString("ordertype");
 				quantity = in.getLong("quantity");
-				if (!orderType.equalsIgnoreCase("market"))
-					price = in.getLong("price");
+				
 			} catch (Exception e) {
 				pw.println(errorMessage("Order must contain security, buysell, and type as strings and price as number"));
 				return 0;
@@ -272,10 +266,6 @@ public class Exchange extends Thread {
 				pw.println(errorMessage("buysell must be either 'buy' or 'sell'"));
 				return 0;
 			}
-			if(!orderType.equalsIgnoreCase("gtc") && !orderType.equalsIgnoreCase("ioc") && !orderType.equalsIgnoreCase("market")) {
-				pw.println(errorMessage("buysell must be either 'buy' or 'sell'"));
-				return 0;
-			}
 			if(price <= 0) {
 				pw.println(errorMessage("price must be greater than 0"));
 				return 0;
@@ -288,7 +278,6 @@ public class Exchange extends Thread {
 			boolean bid = buySell.equalsIgnoreCase("buy");
 			Order o = new Order(price, quantity, time, user.id, security, bid);
 						
-			//int checkMargin(o);
 			System.out.println("executing order");
 			int retCode = executeOrder (o, pw);
 			System.out.println("finished executing order");
