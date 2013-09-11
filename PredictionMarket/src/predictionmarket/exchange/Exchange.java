@@ -4,20 +4,23 @@ package predictionmarket.exchange;
 
 import java.io.*;
 import java.net.*;
+import javax.net.ssl.*;
 import java.util.*;
 import java.sql.*;
 import com.mchange.v2.c3p0.*;	
 import org.json.*;
 import predictionmarket.model.*;
 import predictionmarket.btcnetwork.*;
+import org.eclipse.jetty.server.*;
+import org.eclipse.jetty.server.handler.*;
+import javax.servlet.*;
+import javax.servlet.http.*;
 
-public class Exchange extends Thread {
+public class Exchange {
 	private static final String CONFIG_FILE = "config.json";
-	private static final long BIG_NUM = 100000000000L;
 	private static final String USER = "predictions";
 	private static final String PASS = "m.h.=wily7.exchange";
 	private ComboPooledDataSource cpds;
-	private HashMap<Long, Worker> userWorkerMap;
 	private OrderBook ob;
 	private BitcoinNetworkClient bnc;
 	
@@ -48,12 +51,23 @@ public class Exchange extends Thread {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		userWorkerMap = new HashMap<Long, Worker>();
 		// loadConfig(CONFIG_FILE);
 		loadData();
 		if(ec.btcNetworkToggle)
 			bnc = new BitcoinNetworkClient(this);
 		
+	}
+	
+	public void start() {
+		try {
+			Server server = new Server(8080);
+			server.setHandler(new RequestHandler());
+			server.start();
+	        server.join();
+		} catch(Exception e) {
+			System.err.println("Unable to start server");
+			e.printStackTrace();
+		}
 	}
 	
 	private void loadData() {
@@ -94,176 +108,35 @@ public class Exchange extends Thread {
 		}
 	}
 
-	public void run () {
-		ServerSocket ss = null;
-		try {
-			ss = new ServerSocket(ec.port, 0, InetAddress.getByName(ec.address));
-			
-			while (true) {
-				Socket s = ss.accept();
-				Worker ws = new Worker();
-				ws.setSocket(s);
-				ws.start();
-			}
-						
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				ss.close();
-			} catch (Exception e) { e.printStackTrace(); }
-		}
+	private class RequestHandler extends AbstractHandler
+	{
+	    public void handle(String target,Request baseRequest,HttpServletRequest request,HttpServletResponse response) 
+	        throws IOException, ServletException
+	    {
+	        response.setContentType("text/html;charset=utf-8");
+	        response.setStatus(HttpServletResponse.SC_OK);
+	        baseRequest.setHandled(true);
+	        response.getWriter().println("<h1>Hello World</h1>");
+	        
+	    }
 	}
-	
-	class Worker extends Thread {
-		private Socket s;
-		private User user;
-		
-		private PrintWriter pw;
-		
-		Worker() {
-			s = null;
-			
-		}
 
-		synchronized void setSocket(Socket s) {
-			this.s = s;
-		}
-
-		public synchronized void run() {
-			for (int i = 0; i < 10 && s == null; i++) {
-				/* nothing to do */
-				try {
-					wait();
-				} catch (InterruptedException e) {
-					/* should not happen */
-					continue;
-				}
-			}
-			try {
-				if (s != null)
-					handleClient();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			
-		}
-		
-		
-		int handleLogin (JSONObject in, PrintWriter pw) throws JSONException {
-			Connection con = null;
-			PreparedStatement ps = null;
-			ResultSet rs = null;
-
-			try {
-				String username = in.getString("username");
-				String password = in.getString("password");
-				con = cpds.getConnection();
-				ps = con.prepareStatement("SELECT id FROM users WHERE user=? AND pass=PASSWORD(?)");
-				ps.setString(1, username);
-				ps.setString(2, password);
-				rs = ps.executeQuery();
-				boolean authenticated = false;
-				try {
-					authenticated = rs.next();
-				} catch (Exception e) {
-					System.err.println("Failed to login");
-				}
-				JSONObject out = new JSONObject();
-				out.put("type", "login");
-				if (authenticated) {
-					
-					this.user = new User(rs.getLong(1), username);
-					
-					System.out.println("Put worker in map");
-					userWorkerMap.put(user.id, this);
-					out.put("result", "success");
-					out.put("type", "login");
-				}
-				else {
-					out.put("result", "failure");
-				}
-				pw.println(out.toString());
-			} catch (Exception e) {
-				pw.println(errorMessage("Internal Server Error"));
-				e.printStackTrace(System.err);
-				return 2;
-			} finally {
-				try {
-					if (rs != null) {
-		                rs.close();
-					}
-					if (ps != null) {
-		                ps.close();
-					}
-					if (con != null) {
-		                con.close();
-					}
-				} catch (Exception e) { e.printStackTrace(); System.err.println("Unable to close"); }
-			}
-			return 0;
-		}
-		
-		void reportTransaction (long security, long price, long quantity, long transactionID) {
-			
-			JSONObject job = null;
-			
-			try {
-				job = new JSONObject();
-				job.put("result", "success");
-				job.put("type", "execution");
-				job.put("security", security);
-				job.put("price", price);
-				job.put("quantity", quantity);
-				job.put("id", transactionID);
-			} catch(Exception e) {
-				e.printStackTrace();
-				System.err.println("Unable to report transaction");
-			}
-			synchronized (pw) {
-				pw.println(job.toString());
-			}
-		}
-		
-		void reportDeposit (long userID, long amount, String address) {
-			try {
-				JSONObject job = new JSONObject();
-				job.put("result", "success");
-				job.put("type", "deposit");
-				job.put("amount", amount);
-				job.put("address", address);
-				synchronized (pw) {
-					pw.println(job.toString());
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-				System.err.println("Unable to report order");
-			}
-		}
 		
 		int handlePlaceOrder (JSONObject in, PrintWriter pw) throws JSONException {
-			String buySell = null;
+			boolean isBid = true;
 			long price = 0, quantity = 0, security = 0;
 			try { 
 				security = in.getLong("security");
 				price = in.getLong("price");
-				buySell = in.getString("buysell");
+				isBid = in.getBoolean("buysell");
 				quantity = in.getLong("quantity");
 				
 			} catch (Exception e) {
 				pw.println(errorMessage("Order must contain security, buysell, and type as strings and price as number"));
 				return 0;
 			}
-			if(user == null) {
-				pw.println(errorMessage("User not yet authenticated"));
-				return 0;
-			}
 			if(!ob.secExists(security)) {
 				pw.println(errorMessage("Security doesn't exist"));
-				return 0;
-			}
-			if(!buySell.equalsIgnoreCase("buy") && !buySell.equalsIgnoreCase("sell")) {
-				pw.println(errorMessage("buysell must be either 'buy' or 'sell'"));
 				return 0;
 			}
 			if(price <= 0) {
@@ -275,8 +148,7 @@ public class Exchange extends Thread {
 				return 0;
 			}
 			long time = System.currentTimeMillis();
-			boolean bid = buySell.equalsIgnoreCase("buy");
-			Order o = new Order(price, quantity, time, user.id, security, bid);
+			Order o = new Order(price, quantity, time, user.id, security, isBid);
 						
 			System.out.println("executing order");
 			int retCode = executeOrder (o, pw);
@@ -293,10 +165,6 @@ public class Exchange extends Thread {
 				security = in.getLong("security");
 			} catch (Exception e) {
 				pw.println(errorMessage("Order must contain id and security	"));
-				return 0;
-			}
-			if(user == null) {
-				pw.println(errorMessage("User not yet authenticated"));
 				return 0;
 			}
 			if(!ob.secExists(security)) {
