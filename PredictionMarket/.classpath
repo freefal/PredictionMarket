@@ -53,7 +53,7 @@
 	<classpathentry kind="lib" path="lib/org.eclipse.jetty.security.source_9.0.5.v20130815.jar"/>
 	<classpathentry kind="lib" path="lib/org.eclipse.jetty.server_9.0.5.v20130815.jar" sourcepath="/home/freefal/git/PredictionMarket/PredictionMarket/lib/org.eclipse.jetty.server.source_9.0.5.v20130815.jar"/>
 	<classpathentry kind="lib" path="lib/org.eclipse.jetty.server.source_9.0.5.v20130815.jar"/>
-	<classpathentry kind="lib" path="lib/org.eclipse.jetty.servlet_9.0.5.v20130815.jar"/>
+	<classpathentry kind="lib" path="lib/org.eclipse.jetty.servlet_9.0.5.v20130815.jar" sourcepath="lib/org.eclipse.jetty.servlet.source_9.0.5.v20130815.jar"/>
 	<classpathentry kind="lib" path="lib/org.eclipse.jetty.servlet.source_9.0.5.v20130815.jar"/>
 	<classpathentry kind="lib" path="lib/org.eclipse.jetty.servlets_9.0.5.v20130815.jar"/>
 	<classpathentry kind="lib" path="lib/org.eclipse.jetty.servlets.source_9.0.5.v20130815.jar"/>

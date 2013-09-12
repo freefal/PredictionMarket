@@ -13,6 +13,7 @@ import predictionmarket.model.*;
 import predictionmarket.btcnetwork.*;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.*;
+import org.eclipse.jetty.servlet.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
@@ -108,20 +109,50 @@ public class Exchange {
 		}
 	}
 
-	private class RequestHandler extends AbstractHandler
-	{
-	    public void handle(String target,Request baseRequest,HttpServletRequest request,HttpServletResponse response) 
-	        throws IOException, ServletException
-	    {
-	        response.setContentType("text/html;charset=utf-8");
-	        response.setStatus(HttpServletResponse.SC_OK);
-	        baseRequest.setHandled(true);
-	        response.getWriter().println("<h1>Hello World</h1>");
-	        
-	    }
+	private class RequestHandler extends ServletContextHandler {
+	    public RequestHandler () {
+	    	addServlet(new ServletHolder(new PlaceOrderServlet()),"/order/place");
+	    }		
 	}
 
-		
+	private class PlaceOrderServlet extends HttpServlet {
+		protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+			response.setContentType("text/json");
+	        response.setStatus(HttpServletResponse.SC_OK);
+	        PrintWriter pw = response.getWriter();
+			
+			boolean isBid = true;
+			long price = 0, quantity = 0, security = 0;
+			int bid = 0;
+			
+			security = Long.parseLong(request.getParameter("security"));
+			price = Long.parseLong(request.getParameter("price"));
+			quantity = Long.parseLong(request.getParameter("quantity"));
+			bid = Integer.parseInt(request.getParameter("bid"));
+			
+			if(!ob.secExists(security)) {
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				pw.println(errorMessage("Security doesn't exist"));
+			}
+			if(price <= 0 || price >= 1000000) {
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				pw.println(errorMessage("price must be greater than 0 and less than 1000000"));
+			}
+			if(quantity <= 0) {
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				pw.println(errorMessage("quantity must be greater than 0"));
+			}
+			
+			long time = System.currentTimeMillis();
+			Order o = new Order(price, quantity, time, user.id, security, isBid);
+						
+			System.out.println("executing order");
+			int retCode = executeOrder (o, pw);
+			System.out.println("finished executing order");
+			
+	    }
+	}
+	
 		int handlePlaceOrder (JSONObject in, PrintWriter pw) throws JSONException {
 			boolean isBid = true;
 			long price = 0, quantity = 0, security = 0;
@@ -453,8 +484,7 @@ public class Exchange {
 		JSONObject job = null;
 		try {
 			job = new JSONObject();
-			job.put("result", "error");
-			job.put("message", message);
+			job.put("error", message);
 		} catch (Exception e) { e.printStackTrace(); }
 		
 		return job.toString();
