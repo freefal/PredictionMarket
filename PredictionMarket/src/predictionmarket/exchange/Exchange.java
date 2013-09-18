@@ -111,7 +111,8 @@ public class Exchange {
 
 	private class RequestHandler extends ServletContextHandler {
 	    public RequestHandler () {
-	    	addServlet(new ServletHolder(new PlaceOrderServlet()),"/order/place");
+	    	addServlet(new ServletHolder(new PlaceOrderServlet()),"/v1/order/place");
+	    	addServlet(new ServletHolder(new PlaceOrderServlet()),"/v1/order/cancel");
 	    }		
 	}
 
@@ -122,97 +123,84 @@ public class Exchange {
 	        PrintWriter pw = response.getWriter();
 			
 			boolean isBid = true;
-			long price = 0, quantity = 0, security = 0;
+			long price = 0, quantity = 0, security = 0, user = 0;
 			int bid = 0;
-			
-			security = Long.parseLong(request.getParameter("security"));
-			price = Long.parseLong(request.getParameter("price"));
-			quantity = Long.parseLong(request.getParameter("quantity"));
-			bid = Integer.parseInt(request.getParameter("bid"));
-			
+			try {
+				security = Long.parseLong(request.getParameter("security"));
+				price = Long.parseLong(request.getParameter("price"));
+				quantity = Long.parseLong(request.getParameter("quantity"));
+				bid = Integer.parseInt(request.getParameter("bid"));
+				user = Long.parseLong(request.getParameter("user"));
+			} catch(Exception e) {
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				pw.println(errorMessage("Malformed request"));
+				return;
+			}
 			if(!ob.secExists(security)) {
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				pw.println(errorMessage("Security doesn't exist"));
+				return;
 			}
 			if(price <= 0 || price >= 1000000) {
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				pw.println(errorMessage("price must be greater than 0 and less than 1000000"));
+				return;
 			}
 			if(quantity <= 0) {
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				pw.println(errorMessage("quantity must be greater than 0"));
+				return;
 			}
 			
 			long time = System.currentTimeMillis();
-			Order o = new Order(price, quantity, time, user.id, security, isBid);
-						
-			System.out.println("executing order");
-			int retCode = executeOrder (o, pw);
-			System.out.println("finished executing order");
-			
+			Order o = new Order(price, quantity, time, user, security, isBid);
+			long id = executeOrder (o);
+			JSONObject job = null;
+			try {
+				job = new JSONObject();
+				job.put("order", o.id);
+			} catch (Exception e) { e.printStackTrace(); }
+			pw.println(job.toString());
 	    }
 	}
 	
-		int handlePlaceOrder (JSONObject in, PrintWriter pw) throws JSONException {
-			boolean isBid = true;
-			long price = 0, quantity = 0, security = 0;
-			try { 
-				security = in.getLong("security");
-				price = in.getLong("price");
-				isBid = in.getBoolean("buysell");
-				quantity = in.getLong("quantity");
-				
-			} catch (Exception e) {
-				pw.println(errorMessage("Order must contain security, buysell, and type as strings and price as number"));
-				return 0;
-			}
-			if(!ob.secExists(security)) {
-				pw.println(errorMessage("Security doesn't exist"));
-				return 0;
-			}
-			if(price <= 0) {
-				pw.println(errorMessage("price must be greater than 0"));
-				return 0;
-			}
-			if(quantity <= 0) {
-				pw.println(errorMessage("quantity must be greater than 0"));
-				return 0;
-			}
-			long time = System.currentTimeMillis();
-			Order o = new Order(price, quantity, time, user.id, security, isBid);
-						
-			System.out.println("executing order");
-			int retCode = executeOrder (o, pw);
-			System.out.println("finished executing order");
-						
-			return retCode;
-		}
-		
-		int handleCancelOrder (JSONObject in, PrintWriter pw) throws JSONException {
-			long security = 0;
-			long orderID = -1;
+	private class CancelOrderServlet extends HttpServlet {
+		protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+			response.setContentType("text/json");
+	        response.setStatus(HttpServletResponse.SC_OK);
+	        PrintWriter pw = response.getWriter();
+			
+			long orderID = 0, userID = 0;
+			
 			try {
-				orderID = in.getLong("id");
-				security = in.getLong("security");
-			} catch (Exception e) {
-				pw.println(errorMessage("Order must contain id and security	"));
-				return 0;
-			}
-			if(!ob.secExists(security)) {
-				pw.println(errorMessage("Security doesn't exist"));
-				return 0;
+				orderID = Long.parseLong(request.getParameter("order"));
+				userID = Long.parseLong(request.getParameter("user"));
+			} catch(Exception e) {
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				pw.println(errorMessage("Malformed request"));
+				return;
 			}
 			
-			OrderBookSecurity obs = ob.getOB(security);
-			Order order = obs.remove(orderID);
-			if (order == null) {
-				pw.println(errorMessage("Security doesn't exist"));
-				return 0;
+			Order o = new Order();
+			o.id = orderID;
+			o.userID = userID;
+			Long retOrder = cancelOrder(o);
+			
+			if (retOrder == null) {
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				pw.println(errorMessage("Order not found in the order book. Did you place this order? Was it already executed?"));
+				return;
 			}
-			reportCancelOrder(order, pw);
-			return 0;
-		}
-		
+			
+			JSONObject job = null;
+			try {
+				job = new JSONObject();
+				job.put("order", retOrder);
+			} catch (Exception e) { e.printStackTrace(); }
+			pw.println(job.toString());
+	    }
+	}
+	/*	
 		int handleGetBook (JSONObject in, PrintWriter pw) throws JSONException {
 			long security = 0;
 			
@@ -377,109 +365,9 @@ public class Exchange {
 			pw.println(out);
 			return 0;
 		}
-		
-
-		/*
-		 * 0 - all well
-		 * 1 - exit normally
-		 * 2+ - exit b/c of error
-		 */
-		
-		int handleMessage(String message, PrintWriter pw) throws JSONException {
-			JSONObject job = null;
-			try {
-				job = new JSONObject(message);
-			} catch (Exception e) {
-				pw.println(errorMessage("error parsing JSON"));
-				e.printStackTrace();
-				return 0;
-			}
-			String op = null;
-			try {
-				op = job.getString("op");
-			} catch (Exception e) {
-				pw.println(errorMessage("must provied an 'op'"));
-				return 0;
-			}
 			
-			if (op.equalsIgnoreCase("login")) {
-				System.out.println("login command");
-				return handleLogin(job, pw);
-			}
-			else if (op.equalsIgnoreCase("noop")) {
-				System.out.println("noop command");
-				return handleNOOP(job, pw);
-			}
-			else if (op.equalsIgnoreCase("placeorder")) {
-				System.out.println("placeorder command");
-				return handlePlaceOrder(job, pw);
-			}
-			else if (op.equalsIgnoreCase("cancelorder")) {
-				System.out.println("cancelorder command");
-				return handleCancelOrder(job, pw);
-			}
-			else if (op.equalsIgnoreCase("getbook")) {
-				System.out.println("getbook command");
-				return handleGetBook(job, pw);
-			}
-			else if (op.equalsIgnoreCase("getuserorders")) {
-				System.out.println("getuserorders command");
-				return handleGetUserOrders(job, pw);
-			}
-			else if (op.equalsIgnoreCase("getdepositaddress")) {
-				System.out.println("getdepositaddress command");
-				return handleGetDepositAddress(job, pw);
-			}
-			else if (op.equalsIgnoreCase("withdraw")) {
-				System.out.println("withdraw command");
-				return handleWithdraw(job, pw);
-			}
-			else if (op.equalsIgnoreCase("getexistingpositionsmargin")) {
-				System.out.println("getexistingpositionsmargin command");
-				return handleGetExistingPositionsMargin(job, pw);
-			}
-			else if (op.equalsIgnoreCase("getbalance")) {
-				System.out.println("getbalance command");
-				return handleGetBalance(job, pw);
-			}
-			else if (op.equalsIgnoreCase("getwithdrawableamount")) {
-				System.out.println("getwithdrawableamount command");
-				return handleGetWithdrawableAmount(job, pw);
-			}
-			else {
-				pw.println(errorMessage("Unrecognized op"));
-			}
-			
-			return 0;
-		}
-			
-		void handleClient() {
-			try {
-				BufferedReader br = new BufferedReader(new InputStreamReader(s.getInputStream()));
-				pw = new PrintWriter(s.getOutputStream(), true);
-								
-				int exit = 0;
-				String line = "";
-				
-				while (exit == 0 && line != null) {
-					line = br.readLine();
-					if (line != null) {
-						synchronized (pw) {
-							exit = handleMessage(line, pw);
-						}
-					}
-				}
-				br.close();
-				pw.close();
-				s.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-				if (s.isClosed())
-					userWorkerMap.remove(user.id);
-			}
-		}
 	}
-	
+	*/
 	public String errorMessage(String message) {
 		JSONObject job = null;
 		try {
@@ -489,116 +377,29 @@ public class Exchange {
 		
 		return job.toString();
 	}
-	
-	private synchronized void reportTransaction(long security, long price, long quantity, long buyerID, long sellerID, long transactionID) {
-		Worker buyerWorker = userWorkerMap.get(buyerID);
-		if (buyerWorker != null) {
-			buyerWorker.reportTransaction(security, price, quantity, transactionID);
-		}
-		Worker sellerWorker = userWorkerMap.get(buyerID);
-		if (sellerWorker != null) {
-			sellerWorker.reportTransaction(security, price, -quantity, transactionID);
-		}		
-	}
-	
-	private void reportOrder (Order order, PrintWriter pw) {
-		try {
-			JSONObject job = new JSONObject();
-			job.put("result", "success");
-			job.put("type", "orderPlaced");
-			job.put("price", order.price);
-			job.put("quantity", order.quantity);
-			job.put("security", order.security);
-			job.put("timestamp", order.placed);
-			job.put("buysell", order.bid ? "buy" : "sell");
-			job.put("id", order.id);
-			pw.println(job.toString());
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.err.println("Unable to report order");
-		}
-	}
-	
-	private void reportCancelOrder (Order order, PrintWriter pw) {
-		try {
-			JSONObject job = new JSONObject();
-			job.put("result", "success");
-			job.put("type", "orderCancelled");
-			job.put("price", order.price);
-			job.put("quantity", order.quantity);
-			job.put("security", order.security);
-			job.put("timestamp", order.placed);
-			job.put("buysell", order.bid ? "buy" : "sell");
-			job.put("id", order.id);
-			pw.println(job.toString());
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.err.println("Unable to report order");
-		}
-	}
 
-	private void reportNoOrder (Order order, PrintWriter pw) {
-		try {
-			JSONObject job = new JSONObject();
-			job.put("result", "success");
-			job.put("type", "noexecution");
-			job.put("price", order.price);
-			job.put("quantity", order.quantity);
-			job.put("security", order.security);
-			job.put("timestamp", order.placed);
-			job.put("buysell", order.bid ? "buy" : "sell");
-			pw.println(job.toString());
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.err.println("Unable to report order");
-		}
-	}
-	
-	
-	private synchronized int executeOrder (Order o, PrintWriter pw) {
+	private synchronized int executeOrder (Order o) {
+		ob.putOrderSecurity(o.id, o.security);
 		OrderBookSecurity obs = ob.getOB(o.security);
-		System.out.println(obs);
 		Order bestBid = obs.bestBid();
 		Order bestAsk = obs.bestAsk();
 		JSONObject job = new JSONObject();
-		/*
-		if (orderType.equalsIgnoreCase("market")) {
-			orderType = "IOC";
-			if (buySell.equalsIgnoreCase("buy")) {
-				price = BIG_NUM;
-			}
-			if (buySell.equalsIgnoreCase("sell")) {
-				price = 0;
-			}
-		}
-		*/
 		if (o.bid) {
 			if (bestAsk != null && o.price >= bestAsk.price) {
 				if (o.quantity < bestAsk.quantity) {
 					bestAsk.quantity = bestAsk.quantity - o.quantity;
 					long transactionID = executeTransaction(o.security, bestAsk.price, o.quantity, o.userID, bestAsk.userID);
-					reportTransaction(o.security, bestAsk.price, bestAsk.quantity, o.userID, bestAsk.userID, transactionID);
 				}
 				else {
-					obs.popAsk();
+					Order oldAsk = obs.popAsk();
 					long transactionID = executeTransaction(o.security, bestAsk.price, bestAsk.quantity, o.userID, bestAsk.userID);
-					reportTransaction(o.security, bestAsk.price, bestAsk.quantity, o.userID, bestAsk.userID, transactionID);
-					Order newOrder = new Order(o);
-					executeOrder(newOrder, pw);
+					o.quantity = o.quantity - oldAsk.quantity;
+					if(o.quantity > 0)
+						executeOrder(o);
 				}
 			}
 			else {
-				// if (orderType.equalsIgnoreCase("GTC")) {
-					obs.addBid(o);
-					System.out.println(obs.bestBid().price);
-					reportOrder(o, pw);
-					/*
-				}
-				else {
-					Order order = new Order(price, quantity, System.currentTimeMillis(), userID, security, true);
-					reportNoOrder(order, pw);
-				}
-				*/
+				obs.addBid(o);
 			}
 		}
 		else {
@@ -606,31 +407,25 @@ public class Exchange {
 				if (o.quantity < bestBid.quantity) {
 					bestBid.quantity = bestBid.quantity - o.quantity;
 					long transactionID = executeTransaction(o.security, bestBid.price, o.quantity, bestBid.userID, o.userID);
-					reportTransaction(o.security, bestBid.price, bestBid.quantity, o.userID, bestBid.userID, transactionID);
 				}
 				else {
-					obs.popBid();
+					Order oldBid = obs.popBid();
 					long transactionID = executeTransaction(o.security, bestBid.price, bestBid.quantity, bestBid.userID, o.userID);
-					reportTransaction(o.security, bestBid.price, bestBid.quantity, o.userID, bestBid.userID, transactionID);
-					if (o.quantity - bestBid.quantity > 0)
-						executeOrder(o, pw);
+					o.quantity = o.quantity - oldBid.quantity;
+					if(o.quantity > 0)
+						executeOrder(o);
 				}
 			}
 			else {
-				// if (orderType.equalsIgnoreCase("GTC")) {
 					obs.addAsk(o);
-					reportOrder(o, pw);
-				/*
-				}
-				else {
-					Order order = new Order(price, quantity, System.currentTimeMillis(), userID, security, false);
-					reportNoOrder(order, pw);
-				}
-				*/
 			}
 		}
 		System.out.println(obs);
 		return 0;
+	}
+	
+	private synchronized Long cancelOrder (Order o) {
+		return ob.removeOrder(o);
 	}
 	
 	private synchronized String createDepositAddress(long userID) {
@@ -951,7 +746,6 @@ public class Exchange {
 				ps.setLong(2, userID);
 				ps.executeUpdate();
 						
-				userWorkerMap.get(userID).reportDeposit(userID, amount, address);
 			}
 			else {
 				System.err.println("Coins received from unknown address");

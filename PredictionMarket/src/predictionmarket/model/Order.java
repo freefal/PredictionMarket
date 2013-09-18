@@ -18,7 +18,7 @@ public class Order {
 	}
 	
 	public Order (Order o) {
-		this.id = rand.nextLong();
+		this.id = o.id;
 		this.price = o.price;
 		this.quantity = o.quantity;
 		this.placed = o.placed;

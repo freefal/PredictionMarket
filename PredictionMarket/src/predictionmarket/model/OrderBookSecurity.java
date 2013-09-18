@@ -80,8 +80,11 @@ public class OrderBookSecurity {
 		return order;
 	}
 	
-	public synchronized Order remove (long orderID) {
-		Order order = idMap.remove(orderID);
+	public synchronized Order remove (Order orderToDelete) {
+		Order order = idMap.get(orderToDelete.id);
+		if (order.userID != orderToDelete.userID) // Only the user can cancel his orders
+			return null;
+		order = idMap.remove(orderToDelete.id);
 		if (order == null)
 			return null;
 		if (order.bid)
