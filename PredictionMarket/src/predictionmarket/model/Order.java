@@ -30,7 +30,7 @@ public class Order {
 	}
 	
 	public Order(long price, long quantity, long placed, long userID, long security, boolean bid) {
-		this.id = rand.nextLong();
+		this.id = Math.abs(rand.nextLong());
 		this.price = price;
 		this.quantity = quantity;
 		this.placed = placed;

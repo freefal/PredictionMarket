@@ -92,6 +92,7 @@ public class OrderBookSecurity {
 		else
 			asks.remove(order);
 		removeOrder(order);
+		System.out.println(this);
 		return order;
 	}
 	

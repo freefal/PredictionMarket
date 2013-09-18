@@ -8,7 +8,7 @@
                 <attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader"/>
                 <attribute name="Rsrc-Main-Class" value="predictionmarket.exchange.Exchange"/>
                 <attribute name="Class-Path" value="."/>
-                <attribute name="Rsrc-Class-Path" value="./ mchange-commons-java-0.2.2.jar c3p0-0.9.2-pre4.jar guava-13.0.1.jar log4j-1.2.17.jar mysql-connector-java-5.1.21-bin.jar netty-3.5.7.Final.jar protobuf-java-2.4.1.jar scprov-jdk15on-1.47.0.1.jar slf4j-api-1.7.0.jar slf4j-log4j12-1.7.0.jar socketio.jar bitcoinj-0.10.jar"/>
+                <attribute name="Rsrc-Class-Path" value="./ mchange-commons-java-0.2.2.jar c3p0-0.9.2-pre4.jar guava-13.0.1.jar log4j-1.2.17.jar mysql-connector-java-5.1.21-bin.jar netty-3.5.7.Final.jar protobuf-java-2.4.1.jar scprov-jdk15on-1.47.0.1.jar slf4j-api-1.7.0.jar slf4j-log4j12-1.7.0.jar socketio.jar bitcoinj-0.10.jar simple-5.1.5.jar javax.security.auth.message_1.0.0.v201108011116.jar javax.security.auth.message.source_1.0.0.v201108011116.jar org.eclipse.jetty.annotations_9.0.5.v20130815.jar org.eclipse.jetty.annotations.source_9.0.5.v20130815.jar org.eclipse.jetty.bundles.f_9.0.5.jar org.eclipse.jetty.client_9.0.5.v20130815.jar org.eclipse.jetty.client.source_9.0.5.v20130815.jar org.eclipse.jetty.continuation_9.0.5.v20130815.jar org.eclipse.jetty.continuation.source_9.0.5.v20130815.jar org.eclipse.jetty.deploy_9.0.5.v20130815.jar org.eclipse.jetty.deploy.source_9.0.5.v20130815.jar org.eclipse.jetty.http_9.0.5.v20130815.jar org.eclipse.jetty.http.source_9.0.5.v20130815.jar org.eclipse.jetty.io_9.0.5.v20130815.jar org.eclipse.jetty.io.source_9.0.5.v20130815.jar org.eclipse.jetty.jaspi_9.0.5.v20130815.jar org.eclipse.jetty.jaspi.source_9.0.5.v20130815.jar org.eclipse.jetty.jmx_9.0.5.v20130815.jar org.eclipse.jetty.jmx.source_9.0.5.v20130815.jar org.eclipse.jetty.jndi_9.0.5.v20130815.jar org.eclipse.jetty.jndi.source_9.0.5.v20130815.jar org.eclipse.jetty.osgi.boot_9.0.5.v20130815.jar org.eclipse.jetty.osgi.boot.jsp_9.0.5.v20130815.jar org.eclipse.jetty.osgi.boot.jsp.source_9.0.5.v20130815.jar org.eclipse.jetty.osgi.boot.source_9.0.5.v20130815.jar org.eclipse.jetty.osgi.boot.warurl_9.0.5.v20130815.jar org.eclipse.jetty.osgi.boot.warurl.source_9.0.5.v20130815.jar org.eclipse.jetty.osgi.httpservice_9.0.5.v20130815.jar org.eclipse.jetty.osgi.httpservice.source_9.0.5.v20130815.jar org.eclipse.jetty.osgi.npn.fragment_9.0.5.v20130815.jar org.eclipse.jetty.plus_9.0.5.v20130815.jar org.eclipse.jetty.plus.source_9.0.5.v20130815.jar org.eclipse.jetty.rewrite_9.0.5.v20130815.jar org.eclipse.jetty.rewrite.source_9.0.5.v20130815.jar org.eclipse.jetty.security_9.0.5.v20130815.jar org.eclipse.jetty.security.source_9.0.5.v20130815.jar org.eclipse.jetty.server_9.0.5.v20130815.jar org.eclipse.jetty.server.source_9.0.5.v20130815.jar org.eclipse.jetty.servlet_9.0.5.v20130815.jar org.eclipse.jetty.servlet.source_9.0.5.v20130815.jar org.eclipse.jetty.servlets_9.0.5.v20130815.jar org.eclipse.jetty.servlets.source_9.0.5.v20130815.jar org.eclipse.jetty.spdy.client_9.0.5.v20130815.jar org.eclipse.jetty.spdy.client.source_9.0.5.v20130815.jar org.eclipse.jetty.spdy.core_9.0.5.v20130815.jar org.eclipse.jetty.spdy.core.source_9.0.5.v20130815.jar org.eclipse.jetty.spdy.http.server_9.0.5.v20130815.jar org.eclipse.jetty.spdy.http.server.source_9.0.5.v20130815.jar org.eclipse.jetty.spdy.server_9.0.5.v20130815.jar org.eclipse.jetty.spdy.server.source_9.0.5.v20130815.jar org.eclipse.jetty.util_9.0.5.v20130815.jar org.eclipse.jetty.util.ajax_9.0.5.v20130815.jar org.eclipse.jetty.util.ajax.source_9.0.5.v20130815.jar org.eclipse.jetty.util.source_9.0.5.v20130815.jar org.eclipse.jetty.webapp_9.0.5.v20130815.jar org.eclipse.jetty.webapp.source_9.0.5.v20130815.jar org.eclipse.jetty.websocket.api_9.0.5.v20130815.jar org.eclipse.jetty.websocket.api.source_9.0.5.v20130815.jar org.eclipse.jetty.websocket.client_9.0.5.v20130815.jar org.eclipse.jetty.websocket.client.source_9.0.5.v20130815.jar org.eclipse.jetty.websocket.common_9.0.5.v20130815.jar org.eclipse.jetty.websocket.common.source_9.0.5.v20130815.jar org.eclipse.jetty.websocket.server_9.0.5.v20130815.jar org.eclipse.jetty.websocket.server.source_9.0.5.v20130815.jar org.eclipse.jetty.websocket.servlet_9.0.5.v20130815.jar org.eclipse.jetty.websocket.servlet.source_9.0.5.v20130815.jar org.eclipse.jetty.xml_9.0.5.v20130815.jar org.eclipse.jetty.xml.source_9.0.5.v20130815.jar javax.servlet_3.0.0.v201112011016.jar"/>
             </manifest>
             <zipfileset src="jar-in-jar-loader.zip"/>
             <fileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/bin"/>
@@ -24,6 +24,76 @@
             <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="slf4j-log4j12-1.7.0.jar"/>
             <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="socketio.jar"/>
             <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="bitcoinj-0.10.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="simple-5.1.5.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="javax.security.auth.message_1.0.0.v201108011116.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="javax.security.auth.message.source_1.0.0.v201108011116.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.annotations_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.annotations.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.bundles.f_9.0.5.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.client_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.client.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.continuation_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.continuation.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.deploy_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.deploy.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.http_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.http.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.io_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.io.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.jaspi_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.jaspi.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.jmx_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.jmx.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.jndi_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.jndi.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.osgi.boot_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.osgi.boot.jsp_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.osgi.boot.jsp.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.osgi.boot.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.osgi.boot.warurl_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.osgi.boot.warurl.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.osgi.httpservice_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.osgi.httpservice.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.osgi.npn.fragment_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.plus_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.plus.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.rewrite_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.rewrite.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.security_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.security.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.server_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.server.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.servlet_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.servlet.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.servlets_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.servlets.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.spdy.client_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.spdy.client.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.spdy.core_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.spdy.core.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.spdy.http.server_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.spdy.http.server.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.spdy.server_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.spdy.server.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.util_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.util.ajax_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.util.ajax.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.util.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.webapp_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.webapp.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.websocket.api_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.websocket.api.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.websocket.client_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.websocket.client.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.websocket.common_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.websocket.common.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.websocket.server_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.websocket.server.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.websocket.servlet_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.websocket.servlet.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.xml_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="org.eclipse.jetty.xml.source_9.0.5.v20130815.jar"/>
+            <zipfileset dir="/home/freefal/git/PredictionMarket/PredictionMarket/lib" includes="javax.servlet_3.0.0.v201112011016.jar"/>
         </jar>
     </target>
 </project>

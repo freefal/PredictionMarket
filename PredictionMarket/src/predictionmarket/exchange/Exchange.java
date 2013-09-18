@@ -61,7 +61,7 @@ public class Exchange {
 	
 	public void start() {
 		try {
-			Server server = new Server(8080);
+			Server server = new Server(ec.port);
 			server.setHandler(new RequestHandler());
 			server.start();
 	        server.join();
@@ -112,13 +112,15 @@ public class Exchange {
 	private class RequestHandler extends ServletContextHandler {
 	    public RequestHandler () {
 	    	addServlet(new ServletHolder(new PlaceOrderServlet()),"/v1/order/place");
-	    	addServlet(new ServletHolder(new PlaceOrderServlet()),"/v1/order/cancel");
+	    	addServlet(new ServletHolder(new CancelOrderServlet()),"/v1/order/cancel");
 	    }		
 	}
 
 	private class PlaceOrderServlet extends HttpServlet {
+		private static final long serialVersionUID = 6155547301835026177L;
+
 		protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-			response.setContentType("text/json");
+			response.setContentType("application/json");
 	        response.setStatus(HttpServletResponse.SC_OK);
 	        PrintWriter pw = response.getWriter();
 			
@@ -130,17 +132,18 @@ public class Exchange {
 				price = Long.parseLong(request.getParameter("price"));
 				quantity = Long.parseLong(request.getParameter("quantity"));
 				bid = Integer.parseInt(request.getParameter("bid"));
+				isBid = (bid != 0);
 				user = Long.parseLong(request.getParameter("user"));
 			} catch(Exception e) {
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				pw.println(errorMessage("Malformed request"));
-				return;
+				return;	
 			}
 			if(!ob.secExists(security)) {
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				pw.println(errorMessage("Security doesn't exist"));
 				return;
-			}
+			}	
 			if(price <= 0 || price >= 1000000) {
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				pw.println(errorMessage("price must be greater than 0 and less than 1000000"));
@@ -152,9 +155,10 @@ public class Exchange {
 				return;
 			}
 			
+			
 			long time = System.currentTimeMillis();
 			Order o = new Order(price, quantity, time, user, security, isBid);
-			long id = executeOrder (o);
+			executeOrder (o);
 			JSONObject job = null;
 			try {
 				job = new JSONObject();
@@ -165,17 +169,19 @@ public class Exchange {
 	}
 	
 	private class CancelOrderServlet extends HttpServlet {
+		private static final long serialVersionUID = 200887975102733041L;
+
 		protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 			response.setContentType("text/json");
 	        response.setStatus(HttpServletResponse.SC_OK);
 	        PrintWriter pw = response.getWriter();
 			
 			long orderID = 0, userID = 0;
-			
 			try {
 				orderID = Long.parseLong(request.getParameter("order"));
 				userID = Long.parseLong(request.getParameter("user"));
 			} catch(Exception e) {
+				e.printStackTrace();
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				pw.println(errorMessage("Malformed request"));
 				return;
@@ -383,7 +389,6 @@ public class Exchange {
 		OrderBookSecurity obs = ob.getOB(o.security);
 		Order bestBid = obs.bestBid();
 		Order bestAsk = obs.bestAsk();
-		JSONObject job = new JSONObject();
 		if (o.bid) {
 			if (bestAsk != null && o.price >= bestAsk.price) {
 				if (o.quantity < bestAsk.quantity) {
@@ -417,7 +422,7 @@ public class Exchange {
 				}
 			}
 			else {
-					obs.addAsk(o);
+				obs.addAsk(o);
 			}
 		}
 		System.out.println(obs);
@@ -468,73 +473,77 @@ public class Exchange {
 		long transactionID = -1;
 		try {
 			con = cpds.getConnection();
-			ps = con.prepareStatement("INSERT INTO transactions (security, price, quantity, buyerID, sellerID) VALUES (?,?,?,?,?)");
+			ps = con.prepareStatement("INSERT INTO transactions (securityid, price, quantity, buyerid, sellerid) VALUES (?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
 			ps.setLong(1, security);
 			ps.setLong(2, price);
 			ps.setLong(3, quantity);
 			ps.setLong(4, buyerID);
 			ps.setLong(5, sellerID);
+			System.out.println(ps);
 			ps.executeUpdate();
 			rs = ps.getGeneratedKeys();
 			rs.next();
 			transactionID = rs.getLong(1);
+			rs.close();
+			ps.close();
 			long cost = quantity*price;
-			ps = con.prepareStatement("UPDATE users SET bitcoins = bitcoins + ? WHERE id = ?");
+			ps = con.prepareStatement("UPDATE users SET coins = coins + ? WHERE id = ?");
 			ps.setLong(1, -cost);
 			ps.setLong(2, buyerID);
 			ps.executeUpdate();
 			ps.setLong(1, cost);
 			ps.setLong(2, sellerID);
 			ps.executeUpdate();
-			ps = con.prepareStatement("SELECT positions.id FROM positions WHERE userID=? and securityID=(SELECT securities.id FROM securities WHERE sec=?)");
+			System.out.println(ps);
+			ps.close();
+			ps = con.prepareStatement("SELECT positions.id FROM positions WHERE userID=? and securityid=?");
 			ps.setLong(1, buyerID);
 			ps.setLong(2, security);
+			System.out.println(ps);
 			rs = ps.executeQuery();
 			long buyerPositionID = -1;
 			if (rs.next())
 				buyerPositionID = rs.getLong(1);
 			
 			ps.setLong(1, sellerID);
+			System.out.println(ps);
 			rs = ps.executeQuery();
 			long sellerPositionID = -1;
 			if (rs.next())
 				sellerPositionID = rs.getLong(1);
 			
 			ps = con.prepareStatement("UPDATE positions SET amount = amount + ? WHERE id=?");
-			ps2 = con.prepareStatement("INSERT INTO positions (userID, (SELECT securities.id FROM securities WHERE sec=?), amount) VALUES (?,?,?)");
+			ps2 = con.prepareStatement("INSERT INTO positions (userid, securityid, amount) VALUES (?,?,?)");
 				
 			if(buyerPositionID  != -1) {
 				ps.setLong(1, quantity);
 				ps.setLong(2, buyerPositionID);
+				System.out.println(ps);
 				ps.executeUpdate();
 			}
 			else {
 				ps2.setLong(1, buyerID);
 				ps2.setLong(2, security);
 				ps2.setLong(3, quantity);
+				System.out.println(ps2);
 				ps2.executeUpdate();
 			}
 			
 			if(sellerPositionID  != -1) {
 				ps.setLong(1, -quantity);
 				ps.setLong(2, sellerPositionID);
+				System.out.println(ps);
 				ps.executeUpdate();
 			}
 			else {
 				ps2.setLong(1, sellerID);
 				ps2.setLong(2, security);
 				ps2.setLong(3, -quantity);
+				System.out.println(ps2);
 				ps2.executeUpdate();
 			}
-			
-			ps = con.prepareStatement("UPDATE positions SET bitcoins = bitcoins + ? WHERE id = ?");
-			ps.setLong(1, -cost);
-			ps.setLong(2, buyerID);
-			ps.executeUpdate();
-			ps.setLong(1, cost);
-			ps.setLong(2, sellerID);
-			ps.executeUpdate();
-			
+			ps.close();
+			ps2.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.err.println("Error executing transaction");
@@ -542,13 +551,13 @@ public class Exchange {
 		} finally {
 			try {
 				if (rs != null) {
-	                ps.close();
+	                rs.close();
 				}
 				if (ps != null) {
 	                ps.close();
 				}
 				if (ps2 != null) {
-	                ps.close();
+	                ps2.close();
 				}
 				if (con != null) {
 	                con.close();
@@ -636,12 +645,12 @@ public class Exchange {
 		
 		try {
 			con = cpds.getConnection();
-			ps = con.prepareStatement("SELECT bitcoins FROM users WHERE id = ?");
+			ps = con.prepareStatement("SELECT coins FROM users WHERE id = ?");
 			ps.setLong(1, user.id);
 			rs = ps.executeQuery();
 			
 			if (rs.next()) {
-				long currentBalance = rs.getLong("bitcoins");
+				long currentBalance = rs.getLong("coins");
 				return currentBalance;
 			}
 			
@@ -687,7 +696,7 @@ public class Exchange {
 				
 				try {
 					con = cpds.getConnection();
-					ps = con.prepareStatement("UPDATE users SET bitcoins = bitcoins - ? WHERE id = ?");
+					ps = con.prepareStatement("UPDATE users SET coins = coins - ? WHERE id = ?");
 					ps.setLong(1, amount + BitcoinNetworkClient.FEE);
 					ps.setLong(2, user.id);
 					ps.executeUpdate();
@@ -736,7 +745,7 @@ public class Exchange {
 			long userID = -1;
 			if (rs.next()) {
 				userID = rs.getLong(1);
-				ps = con.prepareStatement("UPDATE users SET bitcoins = bitcoins + ? WHERE id = ?");
+				ps = con.prepareStatement("UPDATE users SET coins = coins + ? WHERE id = ?");
 				ps.setLong(1, amount);
 				ps.setLong(2, userID);
 				ps.executeUpdate();
