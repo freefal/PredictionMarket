@@ -1,0 +1,2 @@
+curl -i -H "Accept: application/json" -X POST -d "user=20231&security=1&price=10000&&quantity=10&bid=1" http://localhost:3178/v1/order/place
+curl -i -H "Accept: application/json" -X POST -d "user=20232&security=1&price=10000&&quantity=5&bid=0" http://localhost:3178/v1/order/place
