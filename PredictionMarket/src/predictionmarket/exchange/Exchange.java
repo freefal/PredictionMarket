@@ -143,7 +143,7 @@ public class Exchange {
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				pw.println(errorMessage("Security doesn't exist"));
 				return;
-			}	
+			}
 			if(price <= 0 || price >= 1000000) {
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				pw.println(errorMessage("price must be greater than 0 and less than 1000000"));
@@ -152,6 +152,11 @@ public class Exchange {
 			if(quantity <= 0) {
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				pw.println(errorMessage("quantity must be greater than 0"));
+				return;
+			}
+			if(price*quantity > availableFunds(user)) {
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				pw.println(errorMessage("insufficient funds"));
 				return;
 			}
 			
@@ -433,6 +438,35 @@ public class Exchange {
 		return ob.removeOrder(o);
 	}
 	
+	private synchronized long availableFunds (long user) {
+		long total = currentBalance(user) - fundsAllocatedToOrders(user);
+		return total;
+	}
+	
+	private synchronized long currentBalance (long user) {
+		
+		
+		return 0;
+	}
+	
+	private synchronized long fundsAllocatedToOrders (long user) {
+		long totalFunds = 0;
+		ArrayList<Order> orders = ob.getUserOrders(user);
+		for (Order o : orders) {
+			if (o.bid){
+				totalFunds += o.price * o.quantity;
+			}
+			
+			// TODO: make this depend on security contract size
+			if (o.ask){
+				totalFunds += (o.security) o.price * o.quantity;
+			}
+		}
+		
+		
+		return totalFunds;
+	}
+	
 	private synchronized String createDepositAddress(long userID) {
 		String address = bnc.createReceivingAddress();
 		Connection con = null;
@@ -700,6 +734,7 @@ public class Exchange {
 					ps.setLong(1, amount + BitcoinNetworkClient.FEE);
 					ps.setLong(2, user.id);
 					ps.executeUpdate();
+					ps.close();
 					
 					ps = con.prepareStatement("INSERT INTO withdrawals (amount, userID, fee) VALUES (?, ?, ?)");
 					ps.setLong(1, amount);
@@ -742,6 +777,8 @@ public class Exchange {
 			ps = con.prepareStatement("SELECT userID FROM depositaddresses WHERE address=?");
 			ps.setString(1, address);
 			rs = ps.executeQuery();
+			rs.close();
+			ps.close();
 			long userID = -1;
 			if (rs.next()) {
 				userID = rs.getLong(1);
@@ -749,12 +786,13 @@ public class Exchange {
 				ps.setLong(1, amount);
 				ps.setLong(2, userID);
 				ps.executeUpdate();
+				ps.close();
 				
 				ps = con.prepareStatement("INSERT INTO deposits (amount, userID) VALUES (?, ?)");
 				ps.setLong(1, amount);
 				ps.setLong(2, userID);
 				ps.executeUpdate();
-						
+				ps.close();		
 			}
 			else {
 				System.err.println("Coins received from unknown address");

@@ -96,31 +96,8 @@ public class OrderBookSecurity {
 		return order;
 	}
 	
-	public JSONObject getUserOrders (long userID) {
-		JSONObject job = null;
-		try {
-			job = new JSONObject();
-			ArrayList<Order> orders = userMap.get(userID);
-			JSONArray jBids = new JSONArray();
-			JSONArray jAsks = new JSONArray();
-			if(orders != null) {
-				for (Order order : orders) {
-					JSONObject newJob = new JSONObject();
-					newJob.put("price", order.price);
-					newJob.put("quantity", order.quantity);
-					if(order.bid)
-						jBids.put(newJob);
-					else
-						jAsks.put(newJob);
-				}
-			}
-			job.put("bids", jBids);
-			job.put("asks", jAsks); 
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.err.println("Unable to covert order book to string");
-		}
-		return job;
+	public ArrayList<Order> getUserOrders (long userID) {
+		return userMap.get(userID);
 	}
 	
 	public JSONObject getBook () {
