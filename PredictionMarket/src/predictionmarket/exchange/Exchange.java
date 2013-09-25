@@ -456,10 +456,8 @@ public class Exchange {
 			if (o.bid){
 				totalFunds += o.price * o.quantity;
 			}
-			
-			// TODO: make this depend on security contract size
-			if (o.ask){
-				totalFunds += (o.security) o.price * o.quantity;
+			else {
+				totalFunds += ((ob.getSecurity(o.security)).contractsize - o.price) * o.quantity;
 			}
 		}
 		
