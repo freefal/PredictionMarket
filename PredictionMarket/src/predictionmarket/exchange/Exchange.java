@@ -111,15 +111,18 @@ public class Exchange {
 
 	private class RequestHandler extends ServletContextHandler {
 	    public RequestHandler () {
-	    	addServlet(new ServletHolder(new PlaceOrderServlet()),"/v1/order/place");
-	    	addServlet(new ServletHolder(new CancelOrderServlet()),"/v1/order/cancel");
-	    }		
+	    	addServlet(new ServletHolder(new PlaceOrderServlet()),"/v1/do/order/place");
+	    	addServlet(new ServletHolder(new CancelOrderServlet()),"/v1/do/order/cancel");
+	    	addServlet(new ServletHolder(new DepositServlet()),"/v1/do/deposit");
+	    	addServlet(new ServletHolder(new WithdrawServlet()),"/v1/do/withdraw");
+	    }
 	}
 
 	private class PlaceOrderServlet extends HttpServlet {
-		private static final long serialVersionUID = 6155547301835026177L;
-
+		private static final long serialVersionUID = 1L;
+		
 		protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+			System.out.println("Order Placed");
 			response.setContentType("application/json");
 	        response.setStatus(HttpServletResponse.SC_OK);
 	        PrintWriter pw = response.getWriter();
@@ -127,6 +130,7 @@ public class Exchange {
 			boolean isBid = true;
 			long price = 0, quantity = 0, security = 0, user = 0;
 			int bid = 0;
+			System.out.println("Before try");
 			try {
 				security = Long.parseLong(request.getParameter("security"));
 				price = Long.parseLong(request.getParameter("price"));
@@ -135,31 +139,36 @@ public class Exchange {
 				isBid = (bid != 0);
 				user = Long.parseLong(request.getParameter("user"));
 			} catch(Exception e) {
+				e.printStackTrace();
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				pw.println(errorMessage("Malformed request"));
 				return;	
 			}
+			System.out.println("After try");
 			if(!ob.secExists(security)) {
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				pw.println(errorMessage("Security doesn't exist"));
 				return;
 			}
+			System.out.println("1");
 			if(price <= 0 || price >= 1000000) {
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				pw.println(errorMessage("price must be greater than 0 and less than 1000000"));
 				return;
 			}
+			System.out.println("2");
 			if(quantity <= 0) {
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				pw.println(errorMessage("quantity must be greater than 0"));
 				return;
 			}
+			System.out.println("3");
 			if(price*quantity > availableFunds(user)) {
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				pw.println(errorMessage("insufficient funds"));
 				return;
 			}
-			
+			System.out.println("ready to execute order");
 			
 			long time = System.currentTimeMillis();
 			Order o = new Order(price, quantity, time, user, security, isBid);
@@ -174,10 +183,79 @@ public class Exchange {
 	}
 	
 	private class CancelOrderServlet extends HttpServlet {
-		private static final long serialVersionUID = 200887975102733041L;
+		private static final long serialVersionUID = 1L;
+		
+		protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+			response.setContentType("application/json");
+	        response.setStatus(HttpServletResponse.SC_OK);
+	        PrintWriter pw = response.getWriter();
+			
+			long orderID = 0, userID = 0;
+			try {
+				orderID = Long.parseLong(request.getParameter("order"));
+				userID = Long.parseLong(request.getParameter("user"));
+			} catch(Exception e) {
+				e.printStackTrace();
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				pw.println(errorMessage("Malformed request"));
+				return;
+			}
+			
+			Order o = new Order();
+			o.id = orderID;
+			o.userID = userID;
+			Long retOrder = cancelOrder(o);
+			
+			if (retOrder == null) {
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				pw.println(errorMessage("Order not found in the order book. Did you place this order? Was it already executed?"));
+				return;
+			}
+			
+			JSONObject job = null;
+			try {
+				job = new JSONObject();
+				job.put("order", retOrder);
+			} catch (Exception e) { e.printStackTrace(); }
+			pw.println(job.toString());
+	    }
+	}
+	
+	private class DepositServlet extends HttpServlet {
+		private static final long serialVersionUID = 1L;
 
 		protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-			response.setContentType("text/json");
+			response.setContentType("application/json");
+	        response.setStatus(HttpServletResponse.SC_OK);
+	        PrintWriter pw = response.getWriter();
+			
+			long userID = 0;
+			try {
+				userID = Long.parseLong(request.getParameter("user"));
+			} catch(Exception e) {
+				e.printStackTrace();
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				pw.println(errorMessage("Malformed request"));
+				return;
+			}
+			
+			
+			String address = createDepositAddress(userID);
+						
+			JSONObject job = null;
+			try {
+				job = new JSONObject();
+				job.put("address", address);
+			} catch (Exception e) { e.printStackTrace(); }
+			pw.println(job.toString());
+	    }
+	}
+	
+	private class WithdrawServlet extends HttpServlet {
+		private static final long serialVersionUID = 1L;
+
+		protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+			response.setContentType("application/json");
 	        response.setStatus(HttpServletResponse.SC_OK);
 	        PrintWriter pw = response.getWriter();
 			
@@ -439,33 +517,65 @@ public class Exchange {
 	}
 	
 	private synchronized long availableFunds (long user) {
-		long total = currentBalance(user) - fundsAllocatedToOrders(user);
+		long curBalance = currentBalance(user);
+		long fundsAllocated = fundsAllocatedToOrders(user);
+		long total = curBalance - fundsAllocated;
 		return total;
 	}
 	
 	private synchronized long currentBalance (long user) {
-		
-		
-		return 0;
+		long coins = 0;
+		Connection con = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			con = cpds.getConnection();
+			ps = con.prepareStatement("SELECT * FROM users WHERE id = ?");
+			ps.setLong(1, user);
+			rs = ps.executeQuery();
+			rs.next();
+			coins = rs.getLong("coins");
+			rs.close();
+			ps.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.err.println("Error executing transaction");
+			return 2;
+		} finally {
+			try {
+				if (rs != null) {
+	                rs.close();
+				}
+				if (ps != null) {
+	                ps.close();
+				}
+				if (con != null) {
+	                con.close();
+				}
+			} catch (Exception e) { e.printStackTrace(); System.err.println("Unable to close"); }
+		}
+		return coins;
 	}
 	
 	private synchronized long fundsAllocatedToOrders (long user) {
 		long totalFunds = 0;
-		ArrayList<Order> orders = ob.getUserOrders(user);
-		for (Order o : orders) {
-			if (o.bid){
-				totalFunds += o.price * o.quantity;
+		try {
+			ArrayList<Order> orders = ob.getUserOrders(user);
+			for (Order o : orders) {
+				if (o.bid){
+					totalFunds += o.price * o.quantity;
+				}
+				else {
+					Security s = (ob.getSecurity(o.security));
+					System.out.println(s);
+					totalFunds += s.contractsize - o.price * o.quantity;
+				}
 			}
-			else {
-				totalFunds += ((ob.getSecurity(o.security)).contractsize - o.price) * o.quantity;
-			}
-		}
-		
-		
+		} catch (Exception e) { e.printStackTrace(); }
 		return totalFunds;
 	}
 	
-	private synchronized String createDepositAddress(long userID) {
+	private String createDepositAddress(long userID) {
 		String address = bnc.createReceivingAddress();
 		Connection con = null;
 		PreparedStatement ps = null;

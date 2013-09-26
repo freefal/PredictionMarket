@@ -97,7 +97,10 @@ public class OrderBookSecurity {
 	}
 	
 	public ArrayList<Order> getUserOrders (long userID) {
-		return userMap.get(userID);
+		ArrayList<Order> orders = userMap.get(userID);
+		if (orders == null)
+			orders = new ArrayList<Order>();
+		return orders;
 	}
 	
 	public JSONObject getBook () {
