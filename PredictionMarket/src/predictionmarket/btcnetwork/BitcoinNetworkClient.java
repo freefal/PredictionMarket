@@ -26,14 +26,23 @@ public class BitcoinNetworkClient extends Thread {
     }
     
     public String createReceivingAddress () {
-    	ECKey key = new ECKey();
-    	wallet.addKey(key);
-    	Address addr = key.toAddress(params);
-    	return addr.toString();
+    	System.out.println("0");
+    	String strAddr = null;
+    	try {
+    		System.out.println("1");
+	    	ECKey key = new ECKey();
+	    	System.out.println("2");
+	    	wallet.addKey(key);
+	    	System.out.println("3");
+	    	Address addr = key.toAddress(params);
+	    	System.out.println("4");
+	    	strAddr = addr.toString(); 
+    	} catch (Exception e) { e. printStackTrace(); }
+    	return strAddr;
     }
     
     public void setup() throws Exception {
-		
+		System.out.println("start steup");
 		params = MainNetParams.get();
 		
 		// Try to read the wallet from storage, create a new one if not possible.
@@ -62,15 +71,12 @@ public class BitcoinNetworkClient extends Thread {
 		BlockStore blockStore = new SPVBlockStore(params, blockChainFile);
 		// BlockStore blockStore = new MemoryBlockStore(params);
 		
-		
 		chain = new BlockChain(params, wallet, blockStore);
-		
 		
 		peerGroup = new PeerGroup(params, chain);
 		peerGroup.setUserAgent("MyUserAgent", "1.0");
 		peerGroup.addWallet(wallet);
 		peerGroup.setFastCatchupTimeSecs(wallet.getEarliestKeyCreationTime());
-		
 		peerGroup.addAddress(new PeerAddress(InetAddress.getLocalHost()));
 		// peerGroup.addPeerDiscovery(new IrcDiscovery("#bitcoin"));
 		peerGroup.addPeerDiscovery(new DnsDiscovery(params));
@@ -106,7 +112,6 @@ public class BitcoinNetworkClient extends Thread {
 	                }
 	            }
 	        });
-		
 		peerGroup.start();
 		peerGroup.downloadBlockChain();
 	}

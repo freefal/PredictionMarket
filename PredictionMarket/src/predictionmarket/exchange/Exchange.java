@@ -54,6 +54,7 @@ public class Exchange {
 		}
 		// loadConfig(CONFIG_FILE);
 		loadData();
+		System.out.println(ec.btcNetworkToggle);
 		if(ec.btcNetworkToggle)
 			bnc = new BitcoinNetworkClient(this);
 		
@@ -576,14 +577,18 @@ public class Exchange {
 	}
 	
 	private String createDepositAddress(long userID) {
+		System.out.println("Creating receiving address");
 		String address = bnc.createReceivingAddress();
+		System.out.println("created receiving address" + address);
 		Connection con = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		
 		try {
 			con = cpds.getConnection();
-			ps = con.prepareStatement("INSERT INTO depositaddresses (userID, address) VALUES (?,?)");
+			// Create a zero deposit that just serves as a map between users and addresses
+			// Each actual deposit will create its own separate row
+			ps = con.prepareStatement("INSERT INTO depositaddresses (userid, address) VALUES (?,?)");
 			ps.setLong(1,userID);
 			ps.setString(2,address);
 			ps.executeUpdate();

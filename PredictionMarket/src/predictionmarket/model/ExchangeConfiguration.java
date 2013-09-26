@@ -21,11 +21,13 @@ public class ExchangeConfiguration {
 	
 	public void loadFromFile(String fileName) {
 		try {
+			System.out.println(fileName);
 			File f = new File(fileName);
 			if(!f.exists())
 				return;
 			
 			BufferedReader br = new BufferedReader(new FileReader(f));
+			
 			String line = null;
 			String jsonString = "";
 				
@@ -33,7 +35,6 @@ public class ExchangeConfiguration {
 				jsonString += line;
 			}
 			br.close();
-			
 			JSONObject job = new JSONObject (jsonString);
 			
 			address = job.optString("address", DEFAULT_ADDRESS);
