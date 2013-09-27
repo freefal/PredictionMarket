@@ -26,16 +26,11 @@ public class BitcoinNetworkClient extends Thread {
     }
     
     public String createReceivingAddress () {
-    	System.out.println("0");
     	String strAddr = null;
     	try {
-    		System.out.println("1");
 	    	ECKey key = new ECKey();
-	    	System.out.println("2");
 	    	wallet.addKey(key);
-	    	System.out.println("3");
 	    	Address addr = key.toAddress(params);
-	    	System.out.println("4");
 	    	strAddr = addr.toString(); 
     	} catch (Exception e) { e. printStackTrace(); }
     	return strAddr;

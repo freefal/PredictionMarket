@@ -191,10 +191,10 @@ public class Exchange {
 	        response.setStatus(HttpServletResponse.SC_OK);
 	        PrintWriter pw = response.getWriter();
 			
-			long orderID = 0, userID = 0;
+			long orderID = 0, user = 0;
 			try {
 				orderID = Long.parseLong(request.getParameter("order"));
-				userID = Long.parseLong(request.getParameter("user"));
+				user = Long.parseLong(request.getParameter("user"));
 			} catch(Exception e) {
 				e.printStackTrace();
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -204,7 +204,7 @@ public class Exchange {
 			
 			Order o = new Order();
 			o.id = orderID;
-			o.userID = userID;
+			o.userID = user;
 			Long retOrder = cancelOrder(o);
 			
 			if (retOrder == null) {
@@ -260,10 +260,12 @@ public class Exchange {
 	        response.setStatus(HttpServletResponse.SC_OK);
 	        PrintWriter pw = response.getWriter();
 			
-			long orderID = 0, userID = 0;
+			String address = null;
+			long amount = 0, user = 0;
 			try {
-				orderID = Long.parseLong(request.getParameter("order"));
-				userID = Long.parseLong(request.getParameter("user"));
+				address = request.getParameter("address");
+				amount = Long.parseLong(request.getParameter("amount"));
+				user = Long.parseLong(request.getParameter("user"));
 			} catch(Exception e) {
 				e.printStackTrace();
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -271,14 +273,11 @@ public class Exchange {
 				return;
 			}
 			
-			Order o = new Order();
-			o.id = orderID;
-			o.userID = userID;
-			Long retOrder = cancelOrder(o);
+			long coins = availableFunds(user);
 			
-			if (retOrder == null) {
+			if (coins < amount) {
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-				pw.println(errorMessage("Order not found in the order book. Did you place this order? Was it already executed?"));
+				pw.println(errorMessage("Can't withdraw more than available funds: " + coins));
 				return;
 			}
 			
@@ -577,17 +576,13 @@ public class Exchange {
 	}
 	
 	private String createDepositAddress(long userID) {
-		System.out.println("Creating receiving address");
 		String address = bnc.createReceivingAddress();
-		System.out.println("created receiving address" + address);
 		Connection con = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		
 		try {
 			con = cpds.getConnection();
-			// Create a zero deposit that just serves as a map between users and addresses
-			// Each actual deposit will create its own separate row
 			ps = con.prepareStatement("INSERT INTO depositaddresses (userid, address) VALUES (?,?)");
 			ps.setLong(1,userID);
 			ps.setString(2,address);
