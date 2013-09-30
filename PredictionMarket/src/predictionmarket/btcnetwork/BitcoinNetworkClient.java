@@ -5,9 +5,11 @@ import java.net.*;
 import java.math.*;
 
 import com.google.bitcoin.core.*;
+import com.google.bitcoin.core.TransactionConfidence.Listener.ChangeReason;
 import com.google.bitcoin.discovery.*;
 import com.google.bitcoin.params.*;
 import com.google.bitcoin.store.*;
+
 import predictionmarket.exchange.*;
 
 public class BitcoinNetworkClient extends Thread {
@@ -65,7 +67,6 @@ public class BitcoinNetworkClient extends Thread {
 		// BlockStore blockStore = new DiskBlockStore(params, blockChainFile);
 		BlockStore blockStore = new SPVBlockStore(params, blockChainFile);
 		// BlockStore blockStore = new MemoryBlockStore(params);
-		
 		chain = new BlockChain(params, wallet, blockStore);
 		
 		peerGroup = new PeerGroup(params, chain);
@@ -73,24 +74,36 @@ public class BitcoinNetworkClient extends Thread {
 		peerGroup.addWallet(wallet);
 		peerGroup.setFastCatchupTimeSecs(wallet.getEarliestKeyCreationTime());
 		peerGroup.addAddress(new PeerAddress(InetAddress.getLocalHost()));
-		// peerGroup.addPeerDiscovery(new IrcDiscovery("#bitcoin"));
 		peerGroup.addPeerDiscovery(new DnsDiscovery(params));
+		peerGroup.addPeerDiscovery(new SeedPeers(params));
 		wallet.addEventListener(new AbstractWalletEventListener() {
 	            @Override
 	            public void onCoinsReceived(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
 	                super.onCoinsReceived(wallet, tx, prevBalance, newBalance);
-	                try {
-	                	for (TransactionOutput txOut : tx.getOutputs()) {
-	                		if (txOut.isMine(wallet)) {
-			                	Address toAddress = txOut.getScriptPubKey().getToAddress(params);
-			                	long amount = txOut.getValue().longValue();
-			                	boe.receivedCoins(toAddress.toString(), amount);
-	                		}
-	                	}
-	                } catch (Exception e) { e.printStackTrace(); }
-	                
+	                System.out.println("Coins received");
+	                for (TransactionOutput txOut : tx.getOutputs()) {
+		                if (txOut.isMine(wallet)) {
+		                	try {
+			                	final long amount = txOut.getValue().longValue();
+			                	final Address toAddress = txOut.getScriptPubKey().getToAddress(params);
+				                TransactionConfidence tc = tx.getConfidence();
+				                tc.addEventListener(new TransactionConfidence.Listener() {
+				                	boolean alreadyAdded = false;
+									public void onConfidenceChanged(Transaction tx, ChangeReason reason) {
+										int depth = tx.getConfidence().getDepthInBlocks();
+										System.out.println ("Depth of transaction: " + depth);
+										if (depth > 1 && !alreadyAdded) {
+											boe.receivedCoins(toAddress.toString(), amount);
+											alreadyAdded = true;
+										}
+									}
+								});
+		                	} catch (Exception e) { e.printStackTrace(); }
+		                }
+	                }
 	            }
-
+	          
+	            
 	            @Override
 	            public void onCoinsSent(Wallet wallet, Transaction tx, BigInteger prevBalance, BigInteger newBalance) {
 	            	super.onCoinsSent(wallet, tx, prevBalance, newBalance);
@@ -118,19 +131,16 @@ public class BitcoinNetworkClient extends Thread {
 	    	BigInteger amountToSend = BigInteger.valueOf(amount-FEE);
 	    	System.out.println(toAddress);
 	    	System.out.println(amountToSend);
-	    	Wallet.SendRequest req = Wallet.SendRequest.to(toAddress, BigInteger.valueOf(amount-FEE));
-	    	req.fee = BigInteger.valueOf(FEE);
-	    	System.out.println(req.fee);
-	    	wallet.completeTx(req);
-	    	sendTx = req.tx;
-	    	wallet.commitTx(sendTx);
-	    	System.out.println("committed");
+	    	
+	    	final Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, toAddress, amountToSend);
+	    	System.out.println("Sending ...");
+	    	
     	} catch (Exception e) {
     		e.printStackTrace();
     		System.err.println("Unable to send " + amount + " to " + toStr);
     	}
     	int retCode = 0;
-    	
+    		
     	if(sendTx == null)
     		retCode = 1;
 	    return retCode;

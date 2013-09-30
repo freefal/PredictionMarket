@@ -275,188 +275,55 @@ public class Exchange {
 			
 			long coins = availableFunds(user);
 			
-			if (coins < amount) {
+			if (coins < (amount + BitcoinNetworkClient.FEE)) {
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-				pw.println(errorMessage("Can't withdraw more than available funds: " + coins));
+				pw.println(errorMessage("Can't withdraw (" + amount + ") more than available funds ("+ coins + ") plus Bitcoin network fee ("+BitcoinNetworkClient.FEE+")"));
 				return;
 			}
+			
+			withdraw(address, amount, user);
 			
 			JSONObject job = null;
 			try {
 				job = new JSONObject();
-				job.put("order", retOrder);
+				job.put("address", address);
+				job.put("amount", amount);
 			} catch (Exception e) { e.printStackTrace(); }
 			pw.println(job.toString());
 	    }
 	}
-	/*	
-		int handleGetBook (JSONObject in, PrintWriter pw) throws JSONException {
-			long security = 0;
+	
+	private class GetOrdersServlet extends HttpServlet {
+		private static final long serialVersionUID = 1L;
+
+		protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+			response.setContentType("application/json");
+	        response.setStatus(HttpServletResponse.SC_OK);
+	        PrintWriter pw = response.getWriter();
 			
+			String address = null;
+			long amount = 0, user = 0;
 			try {
-				security = in.getLong("security");
-			} catch (Exception e) {
-				pw.println(errorMessage("Order must contain security"));
-				return 0;
-			}
-			if(!ob.secExists(security)) {
-				pw.println(errorMessage("Security doesn't exist"));
-				return 0;
+				user = Long.parseLong(request.getParameter("user"));
+			} catch(Exception e) {
+				e.printStackTrace();
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				pw.println(errorMessage("Malformed request"));
+				return;
 			}
 			
-			OrderBookSecurity obs = ob.getOB(security);
-			JSONObject out = new JSONObject();
-			out.put("result", "success");
-			out.put("type", "getbook");
-			out.put("orders", obs.getBook());
-				
-			pw.println(out);
-			return 0;
-		}
-		
-		int handleGetUserOrders (JSONObject in, PrintWriter pw) throws JSONException {
-			long security = 0;
-						
+			ArrayList<Order> orders = getUserOrders(address, amount, user);
+			
+			JSONObject job = null;
 			try {
-				security = in.getLong("security");
-			} catch (Exception e) {
-				pw.println(errorMessage("Order must contain security"));
-				return 0;
-			}
-			if(user == null) {
-				pw.println(errorMessage("User not yet authenticated"));
-				return 0;
-			}
-			if(!ob.secExists(security)) {
-				pw.println(errorMessage("Security doesn't exist"));
-				return 0;
-			}
-			
-			OrderBookSecurity obs = ob.getOB(security);
-			JSONObject out = new JSONObject();
-			out.put("result", "success");
-			out.put("type", "getuserorders");
-			out.put("orders", obs.getUserOrders(user.id));
-				
-			pw.println(out);
-			
-			return 0;
-		}
-		
-		int handleGetDepositAddress (JSONObject in, PrintWriter pw) throws JSONException {
-			if(user == null) {
-				pw.println(errorMessage("User not yet authenticated"));
-				return 0;
-			}
-						
-			String address = createDepositAddress(user.id);
-			
-			JSONObject out = new JSONObject();
-			out.put("result", "success");
-			out.put("type", "getdepositaddress");
-			out.put("address", address);
-			pw.println(out);
-			
-			return 0;
-		}
-		
-		int handleWithdraw (JSONObject in, PrintWriter pw) throws JSONException {
-			if(user == null) {
-				pw.println(errorMessage("User not yet authenticated"));
-				return 0;
-			}
-			String to;
-			long amount;
-			
-			try {
-				to = in.getString("to");
-				amount = in.getLong("amount");
-			} catch (Exception e) {
-				pw.println(errorMessage("Order must contain to address and amount"));
-				return 0;
-			}
-			
-			int retCode = withdraw(to, amount, user);
-			
-			
-			JSONObject out = new JSONObject();
-			out.put("type", "withdraw");
-			if (retCode == 0)
-				out.put("result", "success");
-			else {
-				out.put("result", "failure");
-				out.put("reason", "overdraw");
-			}
-			pw.println(out);
-			
-			return 0;
-		}
-		
-		int handleGetExistingPositionsMargin (JSONObject in, PrintWriter pw) throws JSONException {
-			if(user == null) {
-				pw.println(errorMessage("User not yet authenticated"));
-				return 0;
-			}
-			
-			long margin = existingPositionsInitialMargin(user);
-			
-			JSONObject out = new JSONObject();
-			out.put("type", "getexistingpositionsmargin");
-			out.put("margin", margin);
-			out.put("result", "success");
-			
-			pw.println(out);
-			
-			return 0;
-		}
-		
-		int handleGetBalance (JSONObject in, PrintWriter pw) throws JSONException {
-			if(user == null) {
-				pw.println(errorMessage("User not yet authenticated"));
-				return 0;
-			}
-			
-			long balance = currentBalance(user);
-			
-			JSONObject out = new JSONObject();
-			out.put("type", "getbalance");
-			out.put("balance", balance);
-			out.put("result", "success");
-			
-			pw.println(out);
-			
-			return 0;
-		}
-		
-		int handleGetWithdrawableAmount (JSONObject in, PrintWriter pw) throws JSONException {
-			if(user == null) {
-				pw.println(errorMessage("User not yet authenticated"));
-				return 0;
-			}
-			
-			
-			long withdrawableAmount = withdrawableAmount(user);
-						
-			JSONObject out = new JSONObject();
-			out.put("type", "getwithdrawableamount");
-			out.put("withdrawableamount", withdrawableAmount);
-			out.put("result", "success");
-			
-			pw.println(out);
-			
-			return 0;
-		}
-		
-		int handleNOOP (JSONObject job, PrintWriter pw) throws JSONException {
-			JSONObject out = new JSONObject();
-			out.put("result", "success");
-			out.put("type", "noop");
-			pw.println(out);
-			return 0;
-		}
-			
+				job = new JSONObject();
+				job.put("address", address);
+				job.put("amount", amount);
+			} catch (Exception e) { e.printStackTrace(); }
+			pw.println(job.toString());
+	    }
 	}
-	*/
+	
 	public String errorMessage(String message) {
 		JSONObject job = null;
 		try {
@@ -709,36 +576,31 @@ public class Exchange {
 		return transactionID;
 	}
 	
-	public synchronized long existingPositionsInitialMargin (User user) {
-		
+	
+	public synchronized void withdraw(String address, long amount, long user) {
+		System.out.println("in withdraw");
 		Connection con = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		
 		try {
 			con = cpds.getConnection();
-			ps = con.prepareStatement("SELECT *, positions.id as positionid, securities.id as securityid FROM positions INNER JOIN securities ON positions.securityid = securities.id WHERE userID=?");
-			ps.setLong(1, user.id);
-			rs = ps.executeQuery();
-			ArrayList<Position> positions = new ArrayList<Position>();
+			ps = con.prepareStatement("UPDATE users SET coins = coins - ? WHERE id = ?");
+			ps.setLong(1, amount + BitcoinNetworkClient.FEE);
+			ps.setLong(2, user);
+			ps.executeUpdate();
+			ps.close();
 			
-			while (rs.next()) {
-				Position position = new Position();
-				position.id = rs.getLong("positionid");
-				position.amount = rs.getLong("amount");
-				Security sec = null;
-				String type = rs.getString("type");
-				if (type.equals("option")) {
-					int a;
-				}
-				sec.id = rs.getLong("securityid");
-				sec.desc = rs.getString("desc");
-				position.sec = sec;
-				positions.add(position);
-			}
-			
-			return initialMargin(positions);
+			ps = con.prepareStatement("INSERT INTO withdrawals (amount, userID, fee) VALUES (?, ?, ?)");
+			ps.setLong(1, amount);
+			ps.setLong(2, user);
+			ps.setLong(3, BitcoinNetworkClient.FEE);
+			ps.executeUpdate();
+			System.out.println("did db stuff");			
+			bnc.sendCoins(address, amount);
+			System.out.println("did bitcoin stuff");
 		} catch (Exception e) {
+			System.err.println("Error updating balance during withdrawal");
 			e.printStackTrace(System.err);
 		} finally {
 			try {
@@ -753,126 +615,6 @@ public class Exchange {
 				}
 			} catch (Exception e) { e.printStackTrace(); System.err.println("Unable to close"); }
 		}
-		
-		return 0;
-	}
-	
-	public long initialMargin (ArrayList<Position> positions) {
-		long margin = 0;
-		for (Position p : positions) {
-			margin += initialMargin(p);
-		}
-		return margin;
-	}
-	
-	public long initialMargin (Position position) {
-		long amount = position.amount;
-		if(amount >= 0)
-			return 0;
-		Security sec = position.sec;
-		long singleMargin = 0;
-		
-		long totalMargin = singleMargin * -amount;
-		return totalMargin;
-	}
-	
-	public long initialMargin (Security option) {
-		return 0;
-	}
-	
-	public synchronized long currentBalance(User user) {
-		Connection con = null;
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-		
-		try {
-			con = cpds.getConnection();
-			ps = con.prepareStatement("SELECT coins FROM users WHERE id = ?");
-			ps.setLong(1, user.id);
-			rs = ps.executeQuery();
-			
-			if (rs.next()) {
-				long currentBalance = rs.getLong("coins");
-				return currentBalance;
-			}
-			
-			
-		} catch (Exception e) {
-			e.printStackTrace(System.err);
-		} finally {
-			try {
-				if (rs != null) {
-	                rs.close();
-				}
-				if (ps != null) {
-	                ps.close();
-				}
-				if (con != null) {
-	                con.close();
-				}
-			} catch (Exception e) { e.printStackTrace(); System.err.println("Unable to close"); }
-		}
-		
-		return 0;
-	}
-	
-	public synchronized long withdrawableAmount(User user) {
-		long margin = existingPositionsInitialMargin(user);
-		long balance = currentBalance(user);
-		long withdrawableAmount = Math.max(0, balance - margin - BitcoinNetworkClient.FEE);
-		return withdrawableAmount;
-	}
-	
-	public synchronized int withdraw(String to, long amount, User user) {
-		long margin = existingPositionsInitialMargin (user);
-		long balance = currentBalance (user);
-		
-		int retCode = 1;
-		
-		if(balance > (margin + amount + BitcoinNetworkClient.FEE)) {
-			retCode = bnc.sendCoins(to, amount);
-			if (retCode == 0) {
-				Connection con = null;
-				PreparedStatement ps = null;
-				ResultSet rs = null;
-				
-				try {
-					con = cpds.getConnection();
-					ps = con.prepareStatement("UPDATE users SET coins = coins - ? WHERE id = ?");
-					ps.setLong(1, amount + BitcoinNetworkClient.FEE);
-					ps.setLong(2, user.id);
-					ps.executeUpdate();
-					ps.close();
-					
-					ps = con.prepareStatement("INSERT INTO withdrawals (amount, userID, fee) VALUES (?, ?, ?)");
-					ps.setLong(1, amount);
-					ps.setLong(2, user.id);
-					ps.setLong(3, BitcoinNetworkClient.FEE);
-					ps.executeUpdate();
-					
-				} catch (Exception e) {
-					System.err.println("Error updating balance during withdrawal");
-					e.printStackTrace(System.err);
-				} finally {
-					try {
-						if (rs != null) {
-			                rs.close();
-						}
-						if (ps != null) {
-			                ps.close();
-						}
-						if (con != null) {
-			                con.close();
-						}
-					} catch (Exception e) { e.printStackTrace(); System.err.println("Unable to close"); }
-				}
-			}
-		}
-		else {
-			retCode = 1;
-		}
-		
-		return retCode;
 	}
 	
 	public void receivedCoins (String address, long amount) {
@@ -885,25 +627,26 @@ public class Exchange {
 			ps = con.prepareStatement("SELECT userID FROM depositaddresses WHERE address=?");
 			ps.setString(1, address);
 			rs = ps.executeQuery();
-			rs.close();
-			ps.close();
 			long userID = -1;
 			if (rs.next()) {
 				userID = rs.getLong(1);
+				rs.close();
+				ps.close();
 				ps = con.prepareStatement("UPDATE users SET coins = coins + ? WHERE id = ?");
 				ps.setLong(1, amount);
 				ps.setLong(2, userID);
 				ps.executeUpdate();
 				ps.close();
-				
-				ps = con.prepareStatement("INSERT INTO deposits (amount, userID) VALUES (?, ?)");
+								
+				ps = con.prepareStatement("INSERT INTO deposits (amount, userID, address) VALUES (?, ?, ?)");
 				ps.setLong(1, amount);
 				ps.setLong(2, userID);
+				ps.setString(3, address);
 				ps.executeUpdate();
 				ps.close();		
 			}
 			else {
-				System.err.println("Coins received from unknown address");
+				System.err.println(amount + " coins received from unknown address");
 			}
 			
 			
