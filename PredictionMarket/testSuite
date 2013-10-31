@@ -1,4 +1,5 @@
-#curl -i -H "Accept: application/json" -X POST -d "user=20231&security=1&price=10000&&quantity=10&bid=1" http://localhost:3178/v1/do/order/place
-#curl -i -H "Accept: application/json" -X POST -d "user=20232&security=1&price=10000&&quantity=5&bid=0" http://localhost:3178/v1/do/order/place
+curl -i -H "Accept: application/json" -X POST -d "user=20231&security=1&price=10000&&quantity=10&bid=1" http://localhost:3178/v1/do/order/place
+curl -i -H "Accept: application/json" -X POST -d "user=20231&security=1&price=11000&&quantity=5&bid=0" http://localhost:3178/v1/do/order/place
+curl -i -H "Accept: application/json" -X POST -d "user=20231" http://localhost:3178/v1/get/userorders
 #curl -i -H "Accept: application/json" -X POST -d "user=20232" http://localhost:3178/v1/do/deposit
-curl -i -H "Accept: application/json" -X POST -d "user=20232&amount=100000&address=122MSXPSKcLhfYma7UTS82NLm4WYJ9nxqV" http://localhost:3178/v1/do/withdraw
+#curl -i -H "Accept: application/json" -X POST -d "user=20232&amount=100000&address=122MSXPSKcLhfYma7UTS82NLm4WYJ9nxqV" http://localhost:3178/v1/do/withdraw

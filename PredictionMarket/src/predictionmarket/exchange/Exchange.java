@@ -1,4 +1,4 @@
-// TODO - does user have enough $ to place order?
+// TODO - Actually implement API keys rather than just having users pass their ids
 
 package predictionmarket.exchange;
 
@@ -114,6 +114,8 @@ public class Exchange {
 	    public RequestHandler () {
 	    	addServlet(new ServletHolder(new PlaceOrderServlet()),"/v1/do/order/place");
 	    	addServlet(new ServletHolder(new CancelOrderServlet()),"/v1/do/order/cancel");
+	    	addServlet(new ServletHolder(new GetUserOrdersServlet()),"/v1/get/userorders");
+	    	addServlet(new ServletHolder(new GetUserPositionsServlet()),"/v1/get/userpositions");
 	    	addServlet(new ServletHolder(new DepositServlet()),"/v1/do/deposit");
 	    	addServlet(new ServletHolder(new WithdrawServlet()),"/v1/do/withdraw");
 	    }
@@ -293,16 +295,15 @@ public class Exchange {
 	    }
 	}
 	
-	private class GetOrdersServlet extends HttpServlet {
+	private class GetUserOrdersServlet extends HttpServlet {
 		private static final long serialVersionUID = 1L;
 
-		protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 			response.setContentType("application/json");
 	        response.setStatus(HttpServletResponse.SC_OK);
 	        PrintWriter pw = response.getWriter();
 			
-			String address = null;
-			long amount = 0, user = 0;
+	        long user = 0;
 			try {
 				user = Long.parseLong(request.getParameter("user"));
 			} catch(Exception e) {
@@ -312,13 +313,49 @@ public class Exchange {
 				return;
 			}
 			
-			ArrayList<Order> orders = getUserOrders(address, amount, user);
+			ArrayList<Order> orders = ob.getUserOrders(user);
 			
 			JSONObject job = null;
 			try {
 				job = new JSONObject();
-				job.put("address", address);
-				job.put("amount", amount);
+				JSONArray ja = new JSONArray();
+				for (Order o : orders) {
+					ja.put(o.id);
+				}
+				job.put("orders", ja);
+			} catch (Exception e) { e.printStackTrace(); }
+			pw.println(job.toString());
+	    }
+	}
+	
+	private class GetUserPositionsServlet extends HttpServlet {
+		private static final long serialVersionUID = 1L;
+
+		protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+			response.setContentType("application/json");
+	        response.setStatus(HttpServletResponse.SC_OK);
+	        PrintWriter pw = response.getWriter();
+			
+	        long user = 0;
+			try {
+				user = Long.parseLong(request.getParameter("user"));
+			} catch(Exception e) {
+				e.printStackTrace();
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				pw.println(errorMessage("Malformed request"));
+				return;
+			}
+			
+			ArrayList<Order> orders = ob.getUserOrders(user);
+			
+			JSONObject job = null;
+			try {
+				job = new JSONObject();
+				JSONArray ja = new JSONArray();
+				for (Order o : orders) {
+					ja.put(o.id);
+				}
+				job.put("orders", ja);
 			} catch (Exception e) { e.printStackTrace(); }
 			pw.println(job.toString());
 	    }
@@ -385,8 +422,9 @@ public class Exchange {
 	
 	private synchronized long availableFunds (long user) {
 		long curBalance = currentBalance(user);
-		long fundsAllocated = fundsAllocatedToOrders(user);
-		long total = curBalance - fundsAllocated;
+		long fundAllocatedToPositions = fundsAllocatedToPositions(user);
+		long fundsAllocatedToOrders = fundsAllocatedToOrders(user);
+		long total = curBalance - fundsAllocatedToOrders - fundsAllocatedToPositions;
 		return total;
 	}
 	
@@ -425,6 +463,42 @@ public class Exchange {
 	}
 	
 	private synchronized long fundsAllocatedToOrders (long user) {
+		long totalFunds = 0;
+		try {
+			ArrayList<Order> orders = ob.getUserOrders(user);
+			for (Order o : orders) {
+				if (o.bid){
+					totalFunds += o.price * o.quantity;
+				}
+				else {
+					Security s = (ob.getSecurity(o.security));
+					System.out.println(s);
+					totalFunds += s.contractsize - o.price * o.quantity;
+				}
+			}
+		} catch (Exception e) { e.printStackTrace(); }
+		return totalFunds;
+	}
+	
+	private synchronized long fundsAllocatedToPositions (long user) {
+		long totalFunds = 0;
+		try {
+			ArrayList<Order> orders = ob.getUserOrders(user);
+			for (Order o : orders) {
+				if (o.bid){
+					totalFunds += o.price * o.quantity;
+				}
+				else {
+					Security s = (ob.getSecurity(o.security));
+					System.out.println(s);
+					totalFunds += s.contractsize - o.price * o.quantity;
+				}
+			}
+		} catch (Exception e) { e.printStackTrace(); }
+		return totalFunds;
+	}
+	
+	private synchronized ArrayList<Position> getPositions (long user) {
 		long totalFunds = 0;
 		try {
 			ArrayList<Order> orders = ob.getUserOrders(user);
